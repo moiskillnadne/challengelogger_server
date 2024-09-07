@@ -5,4 +5,7 @@ export default new Sequelize({
   storage: process.env.SQLITE_DB_PATH || 'db.sqlite',
   logging: false,
   benchmark: false,
+  define: {
+    freezeTableName: true,
+  },
 });

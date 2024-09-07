@@ -43,11 +43,6 @@ export default [
 
           pathGroups: [
             {
-              pattern: '@nestjs/**',
-              group: 'external',
-              position: 'before',
-            },
-            {
               pattern: './modules/**',
               group: 'internal',
               position: 'before',

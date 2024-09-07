@@ -1,4 +1,5 @@
 import express, { Request, Response } from 'express';
+import { ValidationErrorItem } from 'sequelize';
 
 import { User } from './database/models/User';
 
@@ -9,23 +10,35 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
-app.post('/', async (req: Request, res: Response) => {
+app.post('/auth/login', async (req: Request, res: Response) => {
   const body = req.body;
 
   if (!body?.email) {
-    return res.status(400).send('Email is required');
+    return res.status(400).json({
+      isError: true,
+      type: 'FIELD_REQUIRED',
+      message: 'Email is required',
+    });
   }
 
   try {
-    const user = User.build({ email: body.email });
+    const user = await User.create({ email: body.email });
+    return res.status(201).json({
+      message: 'User created',
+      user,
+    });
+  } catch (error: any) {
+    if (error?.errors?.[0] instanceof ValidationErrorItem) {
+      return res.status(400).json({
+        isError: true,
+        type: 'VALIDATION_ERROR',
+        message: error?.errors?.[0].message,
+        details: error?.errors?.[0],
+      });
+    }
 
-    await user.save();
-  } catch (error) {
-    console.error('Error:', error);
-    return res.status(404).send('Error');
+    return res.status(500).json({ isError: true });
   }
-
-  res.send('Hello World!');
 });
 
 app.listen(PORT, async () => {

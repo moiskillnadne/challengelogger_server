@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
 
-import { User } from './database/entities/User';
+import { User } from './database/models/User';
 
 import { Sequelize } from '~/database';
 
@@ -36,7 +36,6 @@ app.listen(PORT, async () => {
     console.info('Connection has been established successfully.');
 
     await Sequelize.sync();
-    // await Sequelize.drop();
   } catch (error) {
     console.error('Unable to connect to the database:', error);
   }

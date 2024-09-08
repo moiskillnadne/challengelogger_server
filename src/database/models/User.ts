@@ -3,7 +3,7 @@ import { DataTypes } from 'sequelize';
 import Sequelize from '../connection';
 
 export const User = Sequelize.define(
-  'User',
+  'user',
   {
     id: {
       type: DataTypes.UUIDV4,

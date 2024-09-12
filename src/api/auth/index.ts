@@ -4,6 +4,7 @@ import { ValidationErrorItem } from 'sequelize';
 import { LoginBodySchema } from './validation.schema';
 
 import { ZodValidationError } from '~/core/errors/ZodValidationError';
+import { SendGridService } from '~/integration/SendGrid';
 import { UserCrudService } from '~/shared/user/User.crud';
 
 const route = express.Router();
@@ -19,6 +20,15 @@ route.post('/login', async (req: Request, res: Response) => {
     const [user, isCreated] = await UserCrudService.createOrGet(
       validationResult.data.email,
     );
+
+    const mailer = new SendGridService();
+
+    await mailer.sendEmail({
+      to: validationResult.data.email,
+      subject: 'Welcome to our platform',
+      text: `Welcome to our platform, ${validationResult.data.email}!`,
+      html: `<h1>Welcome to our platform, ${validationResult.data.email}!</h1>`,
+    });
 
     if (isCreated) {
       return res.status(201).json({

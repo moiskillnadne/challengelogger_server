@@ -1,10 +1,13 @@
 import express, { Request, Response } from 'express';
 import { ValidationErrorItem } from 'sequelize';
 
-import { LoginBodySchema } from './validation.schema';
+import { ConfirmLoginBodySchema, LoginBodySchema } from './validation.schema';
+import { getEmailLoginTemplate } from '../../templates/getEmailLoginTemplate';
 
 import { ZodValidationError } from '~/core/errors/ZodValidationError';
+import { generateOTP } from '~/core/utils';
 import { SendGridService } from '~/integration/SendGrid';
+import { redis } from '~/redis';
 import { UserCrudService } from '~/shared/user/User.crud';
 
 const route = express.Router();
@@ -16,18 +19,41 @@ route.post('/login', async (req: Request, res: Response) => {
     return new ZodValidationError(validationResult.error).send(res);
   }
 
+  const language = req.headers['accept-language'] ?? 'RU-ru';
+
+  const isRuLang = language === 'RU-ru';
+
   try {
     const [user, isCreated] = await UserCrudService.createOrGet(
       validationResult.data.email,
     );
 
+    // Generate OTP
+    const OTP = generateOTP();
+
+    // Save OTP to Redis
+    await redis.set(validationResult.data.email, OTP, {
+      EX: 60 * 15, // 15 minutes
+    });
+
     const mailer = new SendGridService();
 
     await mailer.sendEmail({
       to: validationResult.data.email,
-      subject: 'Welcome to our platform',
-      text: `Welcome to our platform, ${validationResult.data.email}!`,
-      html: `<h1>Welcome to our platform, ${validationResult.data.email}!</h1>`,
+      subject: isRuLang
+        ? 'Добро пожаловать в Challenge Logger'
+        : 'Welcome to our Challenge Logger',
+      html: getEmailLoginTemplate({
+        h2: isRuLang
+          ? `Добро пожаловать в Challenge Logger!`
+          : 'Welcome to our Challenge Logger',
+        p: isRuLang
+          ? `Вы вошли в систему как ${validationResult.data.email}. Ваш одноразовый пароль - ${OTP}`
+          : `You are logged in as ${validationResult.data.email}. Your one time password - ${OTP}`,
+        passwordExpiresIn: isRuLang
+          ? 'Ваш одноразовый пароль истечет через 15 минут.'
+          : 'Your one-time password will expire in 15 minutes.',
+      }),
     });
 
     if (isCreated) {
@@ -63,6 +89,41 @@ route.post('/login', async (req: Request, res: Response) => {
 
     return res.status(500).json({ isError: true });
   }
+});
+
+route.post('/confirm-login', async (req: Request, res: Response) => {
+  const validationResult = ConfirmLoginBodySchema.safeParse(req.body);
+
+  if (validationResult.success === false) {
+    return new ZodValidationError(validationResult.error).send(res);
+  }
+
+  const OTP = await redis.get(validationResult.data.email);
+
+  if (OTP === null) {
+    return res.status(400).json({
+      isError: true,
+      type: 'OTP_EXPIRED',
+      message: 'Code has expired',
+    });
+  }
+
+  if (OTP !== validationResult.data.code) {
+    return res.status(400).json({
+      isError: true,
+      type: 'OTP_INCORRECT',
+      message: 'Wrong code',
+    });
+  }
+
+  await redis.del(validationResult.data.email);
+
+  return res.status(200).json({
+    type: 'LOGIN_SUCCESS',
+    statusCode: 200,
+    message: 'Login successful',
+    isSuccess: true,
+  });
 });
 
 export default route;

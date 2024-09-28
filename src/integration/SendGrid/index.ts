@@ -3,7 +3,6 @@ import sendGridMail from '@sendgrid/mail';
 interface EmailBody {
   to: string;
   subject: string;
-  text: string;
   html: string;
 }
 
@@ -16,14 +15,14 @@ export class SendGridService {
 
   public async sendEmail(body: EmailBody): Promise<void> {
     try {
-      const result = await sendGridMail.send({
+      await sendGridMail.send({
         from: this.sender,
         to: body.to,
         subject: body.subject,
-        text: body.text,
+        html: body.html,
       });
 
-      console.info('Email sent', result);
+      console.info(`Email sent to ${body.to}. html: ${body.html}`);
     } catch (error) {
       console.error('Error sending email', error);
     }

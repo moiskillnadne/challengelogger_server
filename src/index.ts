@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import { redis } from './redis';
 
 import AuthRouter from '~/api/auth';
+import UserRoute from '~/api/user';
 import { Sequelize } from '~/database';
 
 const app = express();
@@ -13,6 +14,8 @@ app.use(helmet());
 app.use(express.json());
 
 app.use('/auth', AuthRouter);
+
+app.use('/protected/user', UserRoute);
 
 app.listen(PORT, async () => {
   console.info(`Server is running on port ${PORT}`);

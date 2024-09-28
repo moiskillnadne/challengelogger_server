@@ -2,13 +2,14 @@ import express, { Request, Response } from 'express';
 import { ValidationErrorItem } from 'sequelize';
 
 import { ConfirmLoginBodySchema, LoginBodySchema } from './validation.schema';
-import { getEmailLoginTemplate } from '../../templates/getEmailLoginTemplate';
 
 import { ZodValidationError } from '~/core/errors/ZodValidationError';
 import { generateOTP } from '~/core/utils';
+import jwt from '~/core/utils/jwt';
 import { SendGridService } from '~/integration/SendGrid';
 import { redis } from '~/redis';
 import { UserCrudService } from '~/shared/user/User.crud';
+import { getEmailLoginTemplate } from '~/templates/getEmailLoginTemplate';
 
 const route = express.Router();
 
@@ -115,6 +116,14 @@ route.post('/confirm-login', async (req: Request, res: Response) => {
       message: 'Wrong code',
     });
   }
+
+  const token = jwt.generateToken({ email: validationResult.data.email });
+
+  res.cookie('authToken', token, {
+    httpOnly: true,
+    secure: true,
+    maxAge: 24 * 60 * 60 * 1000,
+  });
 
   await redis.del(validationResult.data.email);
 

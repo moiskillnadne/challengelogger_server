@@ -22,7 +22,7 @@ export class SendGridService {
         html: body.html,
       });
 
-      console.info(`Email sent to ${body.to}. html: ${body.html}`);
+      console.info(`Email sent to ${body.to}`);
     } catch (error) {
       console.error('Error sending email', error);
     }

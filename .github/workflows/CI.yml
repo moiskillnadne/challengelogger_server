@@ -53,5 +53,5 @@ jobs:
       - name: Install deps
         run: yarn
     
-      - name: Run lint
-        run: yarn test
+      - name: Run tests
+        run: yarn jest

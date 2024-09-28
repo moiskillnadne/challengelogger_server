@@ -53,5 +53,9 @@ jobs:
       - name: Install deps
         run: yarn
     
-      - name: Run tests
-        run: yarn jest
+      - name: Create .env.test file
+        run: |
+          echo "JWT_SECRET_KEY=your_test_secret_key" > .env.test
+
+      - name: Run test
+        run: yarn test

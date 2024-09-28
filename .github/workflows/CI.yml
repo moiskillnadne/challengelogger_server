@@ -6,6 +6,9 @@ jobs:
   lint:
     runs-on: ubuntu-latest
 
+    env:
+      JWT_SECRET_KEY: "secret-key"
+
     steps:
 
       - name: Checkout to repo

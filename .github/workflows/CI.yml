@@ -1,0 +1,29 @@
+name: CI
+
+on: [pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout to repo
+        uses: actions/checkout@v4
+
+      - name: Setup nodejs
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'v20.12.2'
+
+      - name: Corepack enable
+        run: corepack enable
+
+      - name: Check yarn version
+        run: yarn -v
+
+      - name: Install deps
+        run: yarn
+    
+      - name: Run lint
+        run: yarn lint

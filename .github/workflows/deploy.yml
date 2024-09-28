@@ -32,6 +32,7 @@ jobs:
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             cd /root/apps/challenge-logger/server
             nvm install
+            corepack enable
             yarn install --frozen-lockfile
             yarn build
             pm2 restart /root/apps/challenge-logger/server/dist/index.js

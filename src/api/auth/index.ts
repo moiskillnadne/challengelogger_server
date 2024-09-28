@@ -5,7 +5,7 @@ import { ConfirmLoginBodySchema, LoginBodySchema } from './validation.schema';
 
 import { ZodValidationError } from '~/core/errors/ZodValidationError';
 import { generateOTP } from '~/core/utils';
-import jwt from '~/core/utils/jwt';
+import { jwtService } from '~/core/utils';
 import { SendGridService } from '~/integration/SendGrid';
 import { redis } from '~/redis';
 import { UserCrudService } from '~/shared/user/User.crud';
@@ -117,7 +117,9 @@ route.post('/confirm-login', async (req: Request, res: Response) => {
     });
   }
 
-  const token = jwt.generateToken({ email: validationResult.data.email });
+  const token = jwtService.generateToken({
+    email: validationResult.data.email,
+  });
 
   res.cookie('authToken', token, {
     httpOnly: true,

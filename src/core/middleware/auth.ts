@@ -1,8 +1,7 @@
 import cookie from 'cookie';
 import { NextFunction, Request, Response } from 'express';
 
-import jwt from '../utils/jwt';
-
+import { jwtService } from '~/core/utils';
 import { User } from '~/database/models/User';
 import { UserCrudService } from '~/shared/user/User.crud';
 
@@ -37,7 +36,7 @@ export const authMiddleware = async (
       throw new Error('Auth token undefined');
     }
 
-    const decoded = jwt.verifyToken(authToken);
+    const decoded = jwtService.verifyToken(authToken);
 
     if (typeof decoded === 'string') {
       throw new Error(

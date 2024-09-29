@@ -6,10 +6,18 @@ const route = express.Router();
 
 route.use(authMiddleware);
 
-route.get('/test', (req: Request, res: Response) => {
+route.get('/', (req: Request, res: Response) => {
   const user = (req as AuthorizedRequest).user;
 
-  res.status(200).send({ message: `Hello, ${user.email}` });
+  return res.status(200).json({
+    type: 'USER_FETCHED',
+    statusCode: 200,
+    message: 'User fetched successfully',
+    isSuccess: true,
+    details: {
+      user,
+    },
+  });
 });
 
 export default route;

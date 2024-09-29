@@ -21,6 +21,13 @@ app.get('/healthcheck', (req: Request, res: Response) => {
   return res.status(200).send('OK');
 });
 
+app.all('*', (req: Request, res: Response) => {
+  return res.status(404).json({
+    error: true,
+    message: 'Endpoint not found.',
+  });
+});
+
 app.listen(PORT, async () => {
   console.info(`Server is running on port ${PORT}`);
 

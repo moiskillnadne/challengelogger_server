@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import helmet from 'helmet';
 
 import { redis } from './redis';
@@ -17,6 +17,10 @@ app.use('/auth', AuthRouter);
 
 app.use('/protected/user', UserRoute);
 
+app.get('/healthcheck', (req: Request, res: Response) => {
+  return res.status(200).send('OK');
+});
+
 app.listen(PORT, async () => {
   console.info(`Server is running on port ${PORT}`);
 
@@ -24,7 +28,7 @@ app.listen(PORT, async () => {
 
   try {
     await Sequelize.authenticate();
-    console.info('Connection has been established successfully.');
+    console.info('Database connected.');
   } catch (error) {
     console.error('Unable to connect to the database:', error);
   }

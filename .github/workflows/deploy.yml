@@ -35,4 +35,5 @@ jobs:
             corepack enable
             yarn install --frozen-lockfile
             yarn build
+            yarn db:migrate
             pm2 restart /root/apps/challenge-logger/ecosystem.config.js

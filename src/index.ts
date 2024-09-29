@@ -1,3 +1,4 @@
+import cors from 'cors';
 import express, { Request, Response } from 'express';
 import helmet from 'helmet';
 
@@ -10,7 +11,15 @@ import { Sequelize } from '~/database';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const corsOptions = {
+  origin: 'https://challenge-logger.riabkov.com',
+  methods: ['GET', 'POST'],
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
 app.use(helmet());
+app.use(cors(corsOptions));
 app.use(express.json());
 
 app.use('/auth', AuthRouter);

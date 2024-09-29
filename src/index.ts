@@ -11,8 +11,14 @@ import { Sequelize } from '~/database';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const allowedOrigins = [
+  'https://challenge-tracker.riabkov.com',
+  'https://challenge-tracker-api.riabkov.com',
+  'http://localhost:5173',
+];
+
 const corsOptions = {
-  origin: 'https://challenge-logger.riabkov.com',
+  origin: allowedOrigins,
   methods: ['GET', 'POST'],
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization'],

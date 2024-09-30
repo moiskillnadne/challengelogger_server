@@ -19,12 +19,10 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: allowedOrigins,
-  methods: ['GET', 'POST'],
   credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
-app.use(helmet());
+app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(cors(corsOptions));
 app.use(express.json());
 
@@ -35,6 +33,8 @@ app.use('/protected/user', UserRoute);
 app.get('/healthcheck', (req: Request, res: Response) => {
   return res.status(200).send('OK');
 });
+
+app.options('*', cors(corsOptions));
 
 app.all('*', (req: Request, res: Response) => {
   return res.status(404).json({

@@ -1,18 +1,13 @@
-import { CreateChallengeDBPayload } from './validation.schema';
+import { CreateChallengeDBPayload, FindByParams } from './validation.schema';
 
 import { UserChallenge } from '~/database/models/UserChallenge';
 
-interface FindByIdAndUserPayload {
-  id: string;
-  userId: string;
-}
-
 export class UserChallengeCrud {
-  static findByIdAndUser(payload: FindByIdAndUserPayload) {
+  static findByParams(params: FindByParams) {
     return UserChallenge.findOne({
       where: {
-        id: payload.id,
-        userId: payload.userId,
+        id: params.id,
+        userId: params.userId,
       },
     });
   }

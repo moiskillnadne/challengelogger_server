@@ -6,6 +6,7 @@ import { redis } from './redis';
 
 import AuthRouter from '~/api/auth';
 import UserRoute from '~/api/user';
+import ChallengeRoute from '~/api/userChallenge/controller';
 import { Sequelize } from '~/database';
 
 const app = express();
@@ -29,6 +30,8 @@ app.use(express.json());
 app.use('/auth', AuthRouter);
 
 app.use('/protected/user', UserRoute);
+
+app.use('/protected/challenge', ChallengeRoute);
 
 app.get('/healthcheck', (req: Request, res: Response) => {
   return res.status(200).send('OK');

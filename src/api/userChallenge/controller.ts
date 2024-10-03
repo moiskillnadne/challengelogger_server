@@ -15,12 +15,41 @@ const route = express.Router();
 
 route.use(authMiddleware);
 
+route.get('/', async (req: Request, res: Response) => {
+  const user = (req as AuthorizedRequest).user;
+
+  try {
+    const dbresult = await UserChallengeCrud.findManyByUserId(user.id);
+
+    return res.status(200).json({
+      type: 'CHALLENGE_LIST_FETCHED',
+      statusCode: 200,
+      message: 'Challenge list fetched successfully',
+      isSuccess: true,
+      details: {
+        challenges: dbresult,
+      },
+    });
+  } catch (error: any) {
+    if (error?.errors?.[0] instanceof ValidationErrorItem) {
+      return res.status(400).json({
+        isError: true,
+        type: 'VALIDATION_ERROR',
+        message: error?.errors?.[0].message,
+        details: error?.errors?.[0],
+      });
+    }
+
+    return res.status(500).json({ isError: true });
+  }
+});
+
 route.get('/:challengeId', async (req: Request, res: Response) => {
   const user = (req as AuthorizedRequest).user;
   const { challengeId } = req.params;
 
   try {
-    const dbresult = await UserChallengeCrud.findByParams({
+    const dbresult = await UserChallengeCrud.findOneByParams({
       id: challengeId,
       userId: user.id,
     });

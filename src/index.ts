@@ -1,6 +1,12 @@
+import '~/integration/Sentry';
+
+import * as Sentry from '@sentry/node';
 import cors from 'cors';
 import express, { Request, Response } from 'express';
 import helmet from 'helmet';
+
+import { logger } from './core/logger';
+import { httpLogger } from './core/logger/middleware';
 
 import { redis } from './redis';
 
@@ -27,6 +33,8 @@ app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(cors(corsOptions));
 app.use(express.json());
 
+app.use(httpLogger);
+
 app.use('/auth', AuthRouter);
 
 app.use('/protected/user', UserRoute);
@@ -46,15 +54,17 @@ app.all('*', (req: Request, res: Response) => {
   });
 });
 
+Sentry.setupExpressErrorHandler(app);
+
 app.listen(PORT, async () => {
-  console.info(`Server is running on port ${PORT}`);
+  logger.info(`Server is running on port ${PORT}`);
 
   await redis.connect();
 
   try {
     await Sequelize.authenticate();
-    console.info('Database connected.');
+    logger.info('Database connected.');
   } catch (error) {
-    console.error('Unable to connect to the database:', error);
+    logger.error('Unable to connect to the database:', error);
   }
 });

@@ -1,5 +1,7 @@
 import sendGridMail from '@sendgrid/mail';
 
+import { logger } from '../../core/logger';
+
 interface EmailBody {
   to: string;
   subject: string;
@@ -22,9 +24,9 @@ export class SendGridService {
         html: body.html,
       });
 
-      console.info(`Email sent to ${body.to}`);
+      logger.info(`Email sent to ${body.to}`);
     } catch (error) {
-      console.error('Error sending email', error);
+      logger.error('Error sending email', error);
     }
   }
 }

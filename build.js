@@ -6,8 +6,14 @@ const env = {
   'process.env.PORT': JSON.stringify(process.env.PORT),
   'process.env.SQLITE_DB_PATH': JSON.stringify(process.env.SQLITE_DB_PATH),
   'process.env.SENDGRID_API_KEY': JSON.stringify(process.env.SENDGRID_API_KEY),
-  'process.env.JWT_SECRET_KEY': JSON.stringify(process.env.JWT_SECRET_KEY)
+  'process.env.JWT_SECRET_KEY': JSON.stringify(process.env.JWT_SECRET_KEY),
+  'process.env.CLOUD_WATCH_LOG_GROUP': JSON.stringify(process.env.CLOUD_WATCH_LOG_GROUP),
+  'process.env.CLOUD_WATCH_LOG_STREAM': JSON.stringify(process.env.CLOUD_WATCH_LOG_STREAM),
+  'process.env.AWS_REGION': JSON.stringify(process.env.AWS_REGION),
+  'process.env.AWS_ACCESS_KEY_ID': JSON.stringify(process.env.AWS_ACCESS_KEY_ID),
+  'process.env.AWS_SECRET_KEY': JSON.stringify(process.env.AWS_SECRET_KEY),
 };
+
 
 esbuild
   .build({

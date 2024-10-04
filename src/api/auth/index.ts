@@ -1,5 +1,4 @@
 import express, { Request, Response } from 'express';
-import { ValidationErrorItem } from 'sequelize';
 
 import { ConfirmLoginBodySchema, LoginBodySchema } from './validation.schema';
 
@@ -17,7 +16,7 @@ route.post('/login', async (req: Request, res: Response) => {
   const validationResult = LoginBodySchema.safeParse(req.body);
 
   if (validationResult.success === false) {
-    return new ZodValidationError(validationResult.error).send(res);
+    return new ZodValidationError(validationResult.error);
   }
 
   const language = req.headers['accept-language'] ?? 'RU-ru';
@@ -78,17 +77,8 @@ route.post('/login', async (req: Request, res: Response) => {
         },
       });
     }
-  } catch (error: any) {
-    if (error?.errors?.[0] instanceof ValidationErrorItem) {
-      return res.status(400).json({
-        isError: true,
-        type: 'VALIDATION_ERROR',
-        message: error?.errors?.[0].message,
-        details: error?.errors?.[0],
-      });
-    }
-
-    return res.status(500).json({ isError: true });
+  } catch (error: unknown) {
+    throw error;
   }
 });
 
@@ -96,46 +86,50 @@ route.post('/confirm-login', async (req: Request, res: Response) => {
   const validationResult = ConfirmLoginBodySchema.safeParse(req.body);
 
   if (validationResult.success === false) {
-    return new ZodValidationError(validationResult.error).send(res);
+    return new ZodValidationError(validationResult.error);
   }
 
-  const OTP = await redis.get(validationResult.data.email);
+  try {
+    const OTP = await redis.get(validationResult.data.email);
 
-  if (OTP === null) {
-    return res.status(400).json({
-      isError: true,
-      type: 'OTP_EXPIRED',
-      message: 'Code has expired',
+    if (OTP === null) {
+      return res.status(400).json({
+        isError: true,
+        type: 'OTP_EXPIRED',
+        message: 'Code has expired',
+      });
+    }
+
+    if (OTP !== validationResult.data.code) {
+      return res.status(400).json({
+        isError: true,
+        type: 'OTP_INCORRECT',
+        message: 'Wrong code',
+      });
+    }
+
+    const token = jwtService.generateToken({
+      email: validationResult.data.email,
     });
-  }
 
-  if (OTP !== validationResult.data.code) {
-    return res.status(400).json({
-      isError: true,
-      type: 'OTP_INCORRECT',
-      message: 'Wrong code',
+    res.cookie('authToken', token, {
+      httpOnly: true,
+      secure: true,
+      maxAge: 24 * 60 * 60 * 1000,
+      sameSite: 'none',
     });
+
+    await redis.del(validationResult.data.email);
+
+    return res.status(200).json({
+      type: 'LOGIN_SUCCESS',
+      statusCode: 200,
+      message: 'Login successful',
+      isSuccess: true,
+    });
+  } catch (error: unknown) {
+    throw error;
   }
-
-  const token = jwtService.generateToken({
-    email: validationResult.data.email,
-  });
-
-  res.cookie('authToken', token, {
-    httpOnly: true,
-    secure: true,
-    maxAge: 24 * 60 * 60 * 1000,
-    sameSite: 'none',
-  });
-
-  await redis.del(validationResult.data.email);
-
-  return res.status(200).json({
-    type: 'LOGIN_SUCCESS',
-    statusCode: 200,
-    message: 'Login successful',
-    isSuccess: true,
-  });
 });
 
 export default route;

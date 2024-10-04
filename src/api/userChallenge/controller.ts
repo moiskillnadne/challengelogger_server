@@ -1,5 +1,4 @@
 import express, { Request, Response } from 'express';
-import { ValidationErrorItem } from 'sequelize';
 
 import { UserChallengeCrud } from './challenge.crud';
 import { UserChallengeProgressCrud } from './challengeProgress.crud';
@@ -8,15 +7,21 @@ import {
   CreateChallengeSchema,
 } from './validation.schema';
 
+import { ErrorMessages } from '~/core/dictionary/error.messages';
+import { UnauthorizedError } from '~/core/errors/UnauthorizedError';
 import { ZodValidationError } from '~/core/errors/ZodValidationError';
-import { authMiddleware, AuthorizedRequest } from '~/core/middleware/auth';
+import { authMiddleWare } from '~/core/middleware/authorization';
 
 const route = express.Router();
 
-route.use(authMiddleware);
+route.use(authMiddleWare);
 
 route.get('/', async (req: Request, res: Response) => {
-  const user = (req as AuthorizedRequest).user;
+  const user = req.user;
+
+  if (!user) {
+    throw new UnauthorizedError(ErrorMessages.unauthorized);
+  }
 
   try {
     const dbresult = await UserChallengeCrud.findManyByUserId(user.id);
@@ -30,23 +35,18 @@ route.get('/', async (req: Request, res: Response) => {
         challenges: dbresult,
       },
     });
-  } catch (error: any) {
-    if (error?.errors?.[0] instanceof ValidationErrorItem) {
-      return res.status(400).json({
-        isError: true,
-        type: 'VALIDATION_ERROR',
-        message: error?.errors?.[0].message,
-        details: error?.errors?.[0],
-      });
-    }
-
-    return res.status(500).json({ isError: true });
+  } catch (error: unknown) {
+    throw error;
   }
 });
 
 route.get('/:challengeId', async (req: Request, res: Response) => {
-  const user = (req as AuthorizedRequest).user;
+  const user = req.user;
   const { challengeId } = req.params;
+
+  if (!user) {
+    throw new UnauthorizedError(ErrorMessages.unauthorized);
+  }
 
   try {
     const dbresult = await UserChallengeCrud.findOneByParams({
@@ -73,27 +73,22 @@ route.get('/:challengeId', async (req: Request, res: Response) => {
         challenge: entity,
       },
     });
-  } catch (error: any) {
-    if (error?.errors?.[0] instanceof ValidationErrorItem) {
-      return res.status(400).json({
-        isError: true,
-        type: 'VALIDATION_ERROR',
-        message: error?.errors?.[0].message,
-        details: error?.errors?.[0],
-      });
-    }
-
-    return res.status(500).json({ isError: true });
+  } catch (error: unknown) {
+    throw error;
   }
 });
 
 route.post('/create', async (req: Request, res: Response) => {
-  const user = (req as AuthorizedRequest).user;
+  const user = req.user;
+
+  if (!user) {
+    throw new UnauthorizedError(ErrorMessages.unauthorized);
+  }
 
   const parsedBody = CreateChallengeSchema.safeParse(req.body);
 
   if (parsedBody.error) {
-    return new ZodValidationError(parsedBody.error).send(res);
+    return new ZodValidationError(parsedBody.error);
   }
 
   try {
@@ -113,17 +108,8 @@ route.post('/create', async (req: Request, res: Response) => {
         challenge: createdEntity,
       },
     });
-  } catch (error: any) {
-    if (error?.errors?.[0] instanceof ValidationErrorItem) {
-      return res.status(400).json({
-        isError: true,
-        type: 'VALIDATION_ERROR',
-        message: error?.errors?.[0].message,
-        details: error?.errors?.[0],
-      });
-    }
-
-    return res.status(500).json({ isError: true });
+  } catch (error: unknown) {
+    throw error;
   }
 });
 
@@ -131,7 +117,7 @@ route.post('/check-in', async (req: Request, res: Response) => {
   const parsedBody = CreateChallengeProgressSchema.safeParse(req.body);
 
   if (parsedBody.error) {
-    return new ZodValidationError(parsedBody.error).send(res);
+    return new ZodValidationError(parsedBody.error);
   }
 
   try {
@@ -148,17 +134,8 @@ route.post('/check-in', async (req: Request, res: Response) => {
         challenge: createdEntity,
       },
     });
-  } catch (error: any) {
-    if (error?.errors?.[0] instanceof ValidationErrorItem) {
-      return res.status(400).json({
-        isError: true,
-        type: 'VALIDATION_ERROR',
-        message: error?.errors?.[0].message,
-        details: error?.errors?.[0],
-      });
-    }
-
-    return res.status(500).json({ isError: true });
+  } catch (error: unknown) {
+    throw error;
   }
 });
 
@@ -179,17 +156,8 @@ route.get('/progress/:challengeId', async (req: Request, res: Response) => {
         challengeProgress: dbresult,
       },
     });
-  } catch (error: any) {
-    if (error?.errors?.[0] instanceof ValidationErrorItem) {
-      return res.status(400).json({
-        isError: true,
-        type: 'VALIDATION_ERROR',
-        message: error?.errors?.[0].message,
-        details: error?.errors?.[0],
-      });
-    }
-
-    return res.status(500).json({ isError: true, details: error });
+  } catch (error: unknown) {
+    throw error;
   }
 });
 

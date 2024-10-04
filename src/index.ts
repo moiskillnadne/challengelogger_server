@@ -20,7 +20,7 @@ process.on('uncaughtException', (err: Error) => {
   process.exit(1);
 });
 
-process.on('unhandledRejection', (reason: any) => {
+process.on('unhandledRejection', (reason: unknown) => {
   logger.error(`Unhandled Rejection: ${reason}`);
   Sentry.captureException(reason);
 });

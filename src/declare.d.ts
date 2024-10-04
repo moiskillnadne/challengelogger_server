@@ -1,11 +1,10 @@
 declare namespace Express {
   export interface Request {
-    traceId?: string;
     user?: {
       id: string;
+      email: string;
       createdAt: string;
       updatedAt: string;
-      email: string;
     };
   }
 }

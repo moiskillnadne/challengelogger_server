@@ -4,15 +4,17 @@ import { randomUUID } from 'node:crypto';
 import { logger } from './index';
 
 export const hideSensitiveFieldInBody = (body: Record<string, unknown>) => {
-  if (body['code']) {
-    body.code = '******';
+  const copy = structuredClone(body);
+
+  if (copy['code']) {
+    copy.code = '******';
   }
 
-  if (body['password']) {
-    body.password = '******';
+  if (copy['password']) {
+    copy.password = '******';
   }
 
-  return body;
+  return copy;
 };
 
 export const httpLogger = (req: Request, res: Response, next: NextFunction) => {
@@ -23,7 +25,7 @@ export const httpLogger = (req: Request, res: Response, next: NextFunction) => {
   const method = req.method;
   const body = req.body;
 
-  const formattedBody = !!body
+  const formattedBody = !!Object.keys(body).length
     ? `Body: ${JSON.stringify(hideSensitiveFieldInBody(body))}`
     : '';
 

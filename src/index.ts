@@ -1,6 +1,11 @@
+import '~/integration/Sentry';
+
+import * as Sentry from '@sentry/node';
 import cors from 'cors';
 import express, { Request, Response } from 'express';
 import helmet from 'helmet';
+
+import { httpLogger } from './core/logger/middleware';
 
 import { redis } from './redis';
 
@@ -27,6 +32,8 @@ app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(cors(corsOptions));
 app.use(express.json());
 
+app.use(httpLogger);
+
 app.use('/auth', AuthRouter);
 
 app.use('/protected/user', UserRoute);
@@ -45,6 +52,8 @@ app.all('*', (req: Request, res: Response) => {
     message: 'Endpoint not found.',
   });
 });
+
+Sentry.setupExpressErrorHandler(app);
 
 app.listen(PORT, async () => {
   console.info(`Server is running on port ${PORT}`);

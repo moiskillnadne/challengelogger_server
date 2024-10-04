@@ -5,15 +5,25 @@ import cors from 'cors';
 import express, { Request, Response } from 'express';
 import helmet from 'helmet';
 
-import { logger } from './core/logger';
-import { httpLogger } from './core/logger/middleware';
-
-import { redis } from './redis';
-
 import AuthRouter from '~/api/auth';
 import UserRoute from '~/api/user';
 import ChallengeRoute from '~/api/userChallenge/controller';
+import { globalErrorHandler } from '~/core/errors/globalErrorHandler';
+import { logger } from '~/core/logger';
+import { httpLogger } from '~/core/logger/middleware';
 import { Sequelize } from '~/database';
+import { redis } from '~/redis';
+
+process.on('uncaughtException', (err: Error) => {
+  logger.error(`Uncaught Exception: ${err.message}`);
+  Sentry.captureException(err);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason: any) => {
+  logger.error(`Unhandled Rejection: ${reason}`);
+  Sentry.captureException(reason);
+});
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -55,6 +65,8 @@ app.all('*', (req: Request, res: Response) => {
 });
 
 Sentry.setupExpressErrorHandler(app);
+
+app.use(globalErrorHandler);
 
 app.listen(PORT, async () => {
   logger.info(`Server is running on port ${PORT}`);

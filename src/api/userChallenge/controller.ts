@@ -7,7 +7,7 @@ import {
   CreateChallengeSchema,
 } from './validation.schema';
 
-import { ValidationError } from '~/core/errors';
+import { NotFoundError, UnprocessableEntityError } from '~/core/errors';
 import { authMiddleware, AuthorizedRequest } from '~/core/middleware/auth';
 
 const route = express.Router();
@@ -47,11 +47,9 @@ route.get(
       });
 
       if (!dbresult) {
-        return res.status(404).json({
-          isError: true,
-          type: 'CHALLENGE_BY_PARAMS_NOT_FOUND',
-          message: 'A challenge with such parameters was not found',
-        });
+        throw new NotFoundError(
+          'A challenge with such parameters was not found',
+        );
       }
 
       const entity = dbresult.toJSON();
@@ -74,15 +72,15 @@ route.get(
 route.post(
   '/create',
   async (req: Request, res: Response, next: NextFunction) => {
-    const user = (req as AuthorizedRequest).user;
-
-    const parsedBody = CreateChallengeSchema.safeParse(req.body);
-
-    if (parsedBody.error) {
-      throw new ValidationError(parsedBody.error.errors[0].message);
-    }
-
     try {
+      const user = (req as AuthorizedRequest).user;
+
+      const parsedBody = CreateChallengeSchema.safeParse(req.body);
+
+      if (parsedBody.error) {
+        throw new UnprocessableEntityError(parsedBody.error.errors[0].message);
+      }
+
       const dbresult = await UserChallengeCrud.create({
         ...parsedBody.data,
         userId: user.id,
@@ -108,13 +106,13 @@ route.post(
 route.post(
   '/check-in',
   async (req: Request, res: Response, next: NextFunction) => {
-    const parsedBody = CreateChallengeProgressSchema.safeParse(req.body);
-
-    if (parsedBody.error) {
-      throw new ValidationError(parsedBody.error.errors[0].message);
-    }
-
     try {
+      const parsedBody = CreateChallengeProgressSchema.safeParse(req.body);
+
+      if (parsedBody.error) {
+        throw new UnprocessableEntityError(parsedBody.error.errors[0].message);
+      }
+
       const dbresult = await UserChallengeProgressCrud.create(parsedBody.data);
 
       const createdEntity = dbresult.toJSON();

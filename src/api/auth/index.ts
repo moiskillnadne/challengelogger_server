@@ -2,7 +2,7 @@ import express, { NextFunction, Request, Response } from 'express';
 
 import { ConfirmLoginBodySchema, LoginBodySchema } from './validation.schema';
 
-import { UnprocessableEntityError, ValidationError } from '~/core/errors/';
+import { BadRequestError, UnprocessableEntityError } from '~/core/errors/';
 import { generateOTP } from '~/core/utils';
 import { jwtService } from '~/core/utils';
 import { SendGridService } from '~/integration/SendGrid';
@@ -15,19 +15,19 @@ const route = express.Router();
 route.post(
   '/login',
   async (req: Request, res: Response, next: NextFunction) => {
-    const validationResult = LoginBodySchema.safeParse(req.body);
-
-    if (validationResult.success === false) {
-      throw new UnprocessableEntityError(
-        validationResult.error.errors[0].message,
-      );
-    }
-
-    const language = req.headers['accept-language'] ?? 'RU-ru';
-
-    const isRuLang = language === 'RU-ru';
-
     try {
+      const validationResult = LoginBodySchema.safeParse(req.body);
+
+      if (validationResult.success === false) {
+        throw new UnprocessableEntityError(
+          validationResult.error.errors[0].message,
+        );
+      }
+
+      const language = req.headers['accept-language'] ?? 'RU-ru';
+
+      const isRuLang = language === 'RU-ru';
+
       const [user, isCreated] = await UserCrudService.createOrGet(
         validationResult.data.email,
       );
@@ -87,50 +87,51 @@ route.post(
   },
 );
 
-route.post('/confirm-login', async (req: Request, res: Response) => {
-  const validationResult = ConfirmLoginBodySchema.safeParse(req.body);
+route.post(
+  '/confirm-login',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const validationResult = ConfirmLoginBodySchema.safeParse(req.body);
 
-  if (validationResult.success === false) {
-    throw new ValidationError(validationResult.error.errors[0].message);
-  }
+      if (validationResult.success === false) {
+        throw new UnprocessableEntityError(
+          validationResult.error.errors[0].message,
+        );
+      }
 
-  const OTP = await redis.get(validationResult.data.email);
+      const OTP = await redis.get(validationResult.data.email);
 
-  if (OTP === null) {
-    return res.status(400).json({
-      isError: true,
-      type: 'OTP_EXPIRED',
-      message: 'Code has expired',
-    });
-  }
+      if (OTP === null) {
+        throw new BadRequestError('Code has expired');
+      }
 
-  if (OTP !== validationResult.data.code) {
-    return res.status(400).json({
-      isError: true,
-      type: 'OTP_INCORRECT',
-      message: 'Wrong code',
-    });
-  }
+      if (OTP !== validationResult.data.code) {
+        throw new BadRequestError('Wrong code');
+      }
 
-  const token = jwtService.generateToken({
-    email: validationResult.data.email,
-  });
+      const token = jwtService.generateToken({
+        email: validationResult.data.email,
+      });
 
-  res.cookie('authToken', token, {
-    httpOnly: true,
-    secure: true,
-    maxAge: 24 * 60 * 60 * 1000,
-    sameSite: 'none',
-  });
+      res.cookie('authToken', token, {
+        httpOnly: true,
+        secure: true,
+        maxAge: 24 * 60 * 60 * 1000,
+        sameSite: 'none',
+      });
 
-  await redis.del(validationResult.data.email);
+      await redis.del(validationResult.data.email);
 
-  return res.status(200).json({
-    type: 'LOGIN_SUCCESS',
-    statusCode: 200,
-    message: 'Login successful',
-    isSuccess: true,
-  });
-});
+      return res.status(200).json({
+        type: 'LOGIN_SUCCESS',
+        statusCode: 200,
+        message: 'Login successful',
+        isSuccess: true,
+      });
+    } catch (error: unknown) {
+      return next(error);
+    }
+  },
+);
 
 export default route;

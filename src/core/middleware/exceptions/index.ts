@@ -1,19 +1,21 @@
 import * as Sentry from '@sentry/node';
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 
 import { logger } from '../../logger';
 
 import {
   BadRequestError,
+  NotFoundError,
   UnauthorizedError,
   UnprocessableEntityError,
-  ValidationError,
 } from '~/core/errors';
 
 export const exceptionsHandlerMiddleware = (
   err: unknown,
   req: Request,
   res: Response,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  next: NextFunction,
 ) => {
   const traceId = 'N/A'; // TODO: Will be added soon
 
@@ -22,10 +24,10 @@ export const exceptionsHandlerMiddleware = (
   logger.error(`[Error ${traceId}] ${JSON.stringify(err)}`);
 
   const isAppCustomErrors =
-    err instanceof ValidationError ||
     err instanceof BadRequestError ||
     err instanceof UnauthorizedError ||
-    err instanceof UnprocessableEntityError;
+    err instanceof UnprocessableEntityError ||
+    err instanceof NotFoundError;
 
   if (isAppCustomErrors) {
     return res.status(err.statusCode).json({

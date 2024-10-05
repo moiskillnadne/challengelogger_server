@@ -1,6 +1,5 @@
 import '~/integration/Sentry';
 
-import * as Sentry from '@sentry/node';
 import cors from 'cors';
 import express, { Request, Response } from 'express';
 import helmet from 'helmet';
@@ -54,8 +53,6 @@ app.all('*', (req: Request, res: Response) => {
     message: 'Endpoint not found.',
   });
 });
-
-Sentry.setupExpressErrorHandler(app);
 
 app.use(exceptionsHandlerMiddleware);
 

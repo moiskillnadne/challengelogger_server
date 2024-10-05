@@ -40,7 +40,7 @@ export const httpLogger = (req: Request, res: Response, next: NextFunction) => {
     );
   });
 
-  // req.traceId = traceId;
+  req.traceId = traceId;
 
   next();
 };

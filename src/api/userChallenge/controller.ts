@@ -7,15 +7,25 @@ import {
   CreateChallengeSchema,
 } from './validation.schema';
 
-import { NotFoundError, UnprocessableEntityError } from '~/core/errors';
-import { authMiddleware, AuthorizedRequest } from '~/core/middleware/auth';
+import { ErrorMessages } from '~/core/dictionary/error.messages';
+import {
+  NotFoundError,
+  UnauthorizedError,
+  UnprocessableEntityError,
+} from '~/core/errors';
+import { authMiddleware } from '~/core/middleware/auth';
+import { isAuthenticated } from '~/shared/user';
 
 const route = express.Router();
 
 route.use(authMiddleware);
 
 route.get('/', async (req: Request, res: Response, next: NextFunction) => {
-  const user = (req as AuthorizedRequest).user;
+  const user = req.user;
+
+  if (!isAuthenticated(user)) {
+    return next(new UnauthorizedError(ErrorMessages.unauthorized));
+  }
 
   try {
     const dbresult = await UserChallengeCrud.findManyByUserId(user.id);
@@ -37,7 +47,12 @@ route.get('/', async (req: Request, res: Response, next: NextFunction) => {
 route.get(
   '/:challengeId',
   async (req: Request, res: Response, next: NextFunction) => {
-    const user = (req as AuthorizedRequest).user;
+    const user = req.user;
+
+    if (!isAuthenticated(user)) {
+      return next(new UnauthorizedError(ErrorMessages.unauthorized));
+    }
+
     const { challengeId } = req.params;
 
     try {
@@ -72,9 +87,13 @@ route.get(
 route.post(
   '/create',
   async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const user = (req as AuthorizedRequest).user;
+    const user = req.user;
 
+    if (!isAuthenticated(user)) {
+      return next(new UnauthorizedError(ErrorMessages.unauthorized));
+    }
+
+    try {
       const parsedBody = CreateChallengeSchema.safeParse(req.body);
 
       if (parsedBody.error) {

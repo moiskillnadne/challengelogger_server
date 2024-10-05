@@ -3,19 +3,8 @@ import { NextFunction, Request, Response } from 'express';
 
 import { BadRequestError, UnauthorizedError } from '~/core/errors';
 import { jwtService } from '~/core/utils';
-import { User } from '~/database/models/User';
+import { User } from '~/shared/user';
 import { UserCrudService } from '~/shared/user/User.crud';
-
-interface User {
-  id: string;
-  createdAt: Date;
-  updatedAt: Date;
-  email: string;
-}
-
-export type AuthorizedRequest = Request & {
-  user: User;
-};
 
 export const authMiddleware = async (
   req: Request,
@@ -61,9 +50,7 @@ export const authMiddleware = async (
       throw new UnauthorizedError(`${middlewarePrefix} User not found`);
     }
 
-    const jsonUser = user?.toJSON() as unknown as User;
-
-    (req as AuthorizedRequest)['user'] = jsonUser;
+    req.user = user?.toJSON() as unknown as User;
 
     next();
   } catch (err: unknown) {

@@ -2,17 +2,12 @@ import { Request, Response, NextFunction } from 'express';
 
 import { authMiddleware, AuthorizedRequest } from './index';
 
+import { BadRequestError, UnauthorizedError } from '~/core/errors';
 import { jwtService } from '~/core/utils';
 import { UserCrudService } from '~/shared/user/User.crud';
 
 jest.mock('~/core/utils');
 jest.mock('~/shared/user/User.crud');
-
-jest.mock('../../logger', () => ({
-  logger: {
-    error: jest.fn((message: string) => console.error(message)),
-  },
-}));
 
 describe('authMiddleware', () => {
   let mockRequest: Partial<Request>;
@@ -32,13 +27,11 @@ describe('authMiddleware', () => {
     };
 
     mockNext = jest.fn();
-  });
 
-  afterEach(() => {
     jest.clearAllMocks();
   });
 
-  it('should return 401 if no cookies are provided', async () => {
+  it('should return UnauthorizedError if no cookies are provided', async () => {
     mockRequest = { headers: {} };
 
     await authMiddleware(
@@ -47,14 +40,13 @@ describe('authMiddleware', () => {
       mockNext,
     );
 
-    expect(mockResponse.status).toHaveBeenCalledWith(401);
-    expect(mockResponse.json).toHaveBeenCalledWith({
-      message: 'Authentication required: Cookies undefined',
-    });
-    expect(mockNext).not.toHaveBeenCalled();
+    expect(mockNext).toHaveBeenCalledWith(
+      new UnauthorizedError('Authentication required: Cookies undefined'),
+    );
+    expect(mockNext).not.toHaveBeenCalledWith();
   });
 
-  it('should return 401 if authToken is missing in cookies', async () => {
+  it('should return UnauthorizedError if authToken is missing in cookies', async () => {
     mockRequest = {
       headers: { cookie: '' },
     };
@@ -65,14 +57,13 @@ describe('authMiddleware', () => {
       mockNext,
     );
 
-    expect(mockResponse.status).toHaveBeenCalledWith(401);
-    expect(mockResponse.json).toHaveBeenCalledWith({
-      message: 'Authentication required: Cookies undefined',
-    });
-    expect(mockNext).not.toHaveBeenCalled();
+    expect(mockNext).toHaveBeenCalledWith(
+      new UnauthorizedError('Authentication required: Cookies undefined'),
+    );
+    expect(mockNext).not.toHaveBeenCalledWith();
   });
 
-  it('should return 400 if decoded JWT is a string', async () => {
+  it('should return BadRequestError if decoded JWT is a string', async () => {
     (jwtService.verifyToken as jest.Mock).mockReturnValue(
       'invalid-token-string',
     );
@@ -83,15 +74,15 @@ describe('authMiddleware', () => {
       mockNext,
     );
 
-    expect(mockResponse.status).toHaveBeenCalledWith(400);
-    expect(mockResponse.json).toHaveBeenCalledWith({
-      message:
+    expect(mockNext).toHaveBeenCalledWith(
+      new BadRequestError(
         'Authentication required: Decoded JWT is string for some reason. Decoded result is invalid-token-string',
-    });
-    expect(mockNext).not.toHaveBeenCalled();
+      ),
+    );
+    expect(mockNext).not.toHaveBeenCalledWith();
   });
 
-  it('should return 401 if email is missing in decoded JWT', async () => {
+  it('should return UnauthorizedError if email is missing in decoded JWT', async () => {
     (jwtService.verifyToken as jest.Mock).mockReturnValue({});
 
     await authMiddleware(
@@ -100,14 +91,13 @@ describe('authMiddleware', () => {
       mockNext,
     );
 
-    expect(mockResponse.status).toHaveBeenCalledWith(401);
-    expect(mockResponse.json).toHaveBeenCalledWith({
-      message: 'Authentication required: Email is undefined',
-    });
-    expect(mockNext).not.toHaveBeenCalled();
+    expect(mockNext).toHaveBeenCalledWith(
+      new UnauthorizedError('Authentication required: Email is undefined'),
+    );
+    expect(mockNext).not.toHaveBeenCalledWith();
   });
 
-  it('should return 401 if user is not found', async () => {
+  it('should return UnauthorizedError if user is not found', async () => {
     (jwtService.verifyToken as jest.Mock).mockReturnValue({
       email: 'test@example.com',
     });
@@ -119,11 +109,10 @@ describe('authMiddleware', () => {
       mockNext,
     );
 
-    expect(mockResponse.status).toHaveBeenCalledWith(401);
-    expect(mockResponse.json).toHaveBeenCalledWith({
-      message: 'Authentication required: User not found',
-    });
-    expect(mockNext).not.toHaveBeenCalled();
+    expect(mockNext).toHaveBeenCalledWith(
+      new UnauthorizedError('Authentication required: User not found'),
+    );
+    expect(mockNext).not.toHaveBeenCalledWith();
   });
 
   it('should call next if token is valid and user is found', async () => {

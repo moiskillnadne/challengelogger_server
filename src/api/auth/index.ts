@@ -3,7 +3,7 @@ import { ValidationErrorItem } from 'sequelize';
 
 import { ConfirmLoginBodySchema, LoginBodySchema } from './validation.schema';
 
-import { ValidationError } from '~/core/errors/';
+import { UnprocessableEntityError, ValidationError } from '~/core/errors/';
 import { generateOTP } from '~/core/utils';
 import { jwtService } from '~/core/utils';
 import { SendGridService } from '~/integration/SendGrid';
@@ -17,7 +17,9 @@ route.post('/login', async (req: Request, res: Response) => {
   const validationResult = LoginBodySchema.safeParse(req.body);
 
   if (validationResult.success === false) {
-    throw new ValidationError(validationResult.error.errors[0].message);
+    throw new UnprocessableEntityError(
+      validationResult.error.errors[0].message,
+    );
   }
 
   const language = req.headers['accept-language'] ?? 'RU-ru';

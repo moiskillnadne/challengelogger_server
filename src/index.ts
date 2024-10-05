@@ -7,6 +7,7 @@ import helmet from 'helmet';
 
 import { logger } from './core/logger';
 import { httpLogger } from './core/logger/middleware';
+import { exceptionsHandlerMiddleware } from './core/middleware/exceptions';
 
 import { redis } from './redis';
 
@@ -55,6 +56,8 @@ app.all('*', (req: Request, res: Response) => {
 });
 
 Sentry.setupExpressErrorHandler(app);
+
+app.use(exceptionsHandlerMiddleware);
 
 app.listen(PORT, async () => {
   logger.info(`Server is running on port ${PORT}`);

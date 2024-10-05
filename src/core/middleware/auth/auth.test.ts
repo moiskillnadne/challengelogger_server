@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 
-import { authMiddleware, AuthorizedRequest } from './index';
+import { authMiddleware } from './index';
 
 import { BadRequestError, UnauthorizedError } from '~/core/errors';
 import { jwtService } from '~/core/utils';
@@ -137,6 +137,6 @@ describe('authMiddleware', () => {
     );
 
     expect(mockNext).toHaveBeenCalled();
-    expect((mockRequest as AuthorizedRequest).user).toEqual(mockUser);
+    expect(mockRequest.user).toEqual(mockUser);
   });
 });

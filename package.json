@@ -7,7 +7,7 @@
   "scripts": {
     "build": "dotenvx run -- node build.js",
     "start": "node dist/index.js",
-    "dev": "dotenvx run -- nodemon --exec ts-node -r tsconfig-paths/register src/index.ts",
+    "dev": "dotenvx run -- nodemon --exec ts-node --files -r tsconfig-paths/register src/index.ts",
     "migration:generate": "sequelize-cli model:generate",
     "db:migrate": "dotenvx run -- sequelize db:migrate",
     "db:migrate:undo": "dotenvx run -- sequelize db:migrate:undo",

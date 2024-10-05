@@ -1,5 +1,6 @@
 import '~/integration/Sentry';
 
+import * as Sentry from '@sentry/node';
 import cors from 'cors';
 import express, { Request, Response } from 'express';
 import helmet from 'helmet';
@@ -14,6 +15,17 @@ import AuthRouter from '~/api/auth';
 import UserRoute from '~/api/user';
 import ChallengeRoute from '~/api/userChallenge/controller';
 import { Sequelize } from '~/database';
+
+process.on('uncaughtException', (err: Error) => {
+  logger.error(`Uncaught Exception: ${err.message}`);
+  Sentry.captureException(err);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason: unknown) => {
+  logger.error(`Unhandled Rejection: ${reason}`);
+  Sentry.captureException(reason);
+});
 
 const app = express();
 const PORT = process.env.PORT || 3000;

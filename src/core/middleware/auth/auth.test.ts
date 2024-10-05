@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 
-import { authMiddleware, AuthorizedRequest } from './auth';
+import { authMiddleware, AuthorizedRequest } from './index';
 
 import { jwtService } from '~/core/utils';
 import { UserCrudService } from '~/shared/user/User.crud';

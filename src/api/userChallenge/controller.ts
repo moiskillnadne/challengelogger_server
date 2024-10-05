@@ -93,7 +93,7 @@ route.post('/create', async (req: Request, res: Response) => {
   const parsedBody = CreateChallengeSchema.safeParse(req.body);
 
   if (parsedBody.error) {
-    return new ZodValidationError(parsedBody.error).send(res);
+    throw new ZodValidationError(parsedBody.error);
   }
 
   try {
@@ -131,7 +131,7 @@ route.post('/check-in', async (req: Request, res: Response) => {
   const parsedBody = CreateChallengeProgressSchema.safeParse(req.body);
 
   if (parsedBody.error) {
-    return new ZodValidationError(parsedBody.error).send(res);
+    throw new ZodValidationError(parsedBody.error);
   }
 
   try {

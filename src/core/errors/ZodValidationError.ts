@@ -1,32 +1,15 @@
-import { Response } from 'express';
-import { ZodError, ZodIssue } from 'zod';
+import { ZodError } from 'zod';
 
-import { AppResponse } from '~/core/interfaces';
+import { AppBaseError } from './AppBaseError';
 
-export class ZodValidationError extends Error {
-  private issues: ZodIssue[];
+import { ErrorTypes } from '~/core/dictionary/error.types';
 
-  private statusCode: number = 400;
-
+export class ZodValidationError extends AppBaseError {
   constructor(error: ZodError) {
-    super();
-
-    this.issues = error.issues;
-  }
-
-  public send(res: Response): void {
-    const firstIssue = this.issues[0];
-
-    const json: AppResponse = {
-      type: 'VALIDATION_ERROR',
-      statusCode: this.statusCode,
-      message: firstIssue.message,
-      isSuccess: false,
-      details: {
-        errors: this.issues,
-      },
-    };
-
-    res.status(this.statusCode).json(json);
+    super({
+      type: ErrorTypes.validation,
+      statusCode: 400,
+      message: error.issues[0].message, // Take first error from the array of issues
+    });
   }
 }

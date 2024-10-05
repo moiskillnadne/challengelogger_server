@@ -17,7 +17,7 @@ route.post('/login', async (req: Request, res: Response) => {
   const validationResult = LoginBodySchema.safeParse(req.body);
 
   if (validationResult.success === false) {
-    return new ZodValidationError(validationResult.error).send(res);
+    throw new ZodValidationError(validationResult.error);
   }
 
   const language = req.headers['accept-language'] ?? 'RU-ru';
@@ -96,7 +96,7 @@ route.post('/confirm-login', async (req: Request, res: Response) => {
   const validationResult = ConfirmLoginBodySchema.safeParse(req.body);
 
   if (validationResult.success === false) {
-    return new ZodValidationError(validationResult.error).send(res);
+    throw new ZodValidationError(validationResult.error);
   }
 
   const OTP = await redis.get(validationResult.data.email);

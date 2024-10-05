@@ -3,8 +3,10 @@ import { Request, Response } from 'express';
 
 import { logger } from '../../logger';
 
+import { AppBaseError } from '~/core/errors/AppBaseError';
+
 export const exceptionsHandlerMiddleware = (
-  err: Error,
+  err: AppBaseError | Error,
   req: Request,
   res: Response,
 ) => {
@@ -14,9 +16,9 @@ export const exceptionsHandlerMiddleware = (
 
   logger.error(`[Error ${traceId}] ${err.message} | Stack: ${err.stack}`);
 
-  if (err instanceof Error) {
-    return res.status(404).json({
-      type: 'CUSTOM_TYPE_HERE',
+  if (err instanceof AppBaseError) {
+    return res.status(err.statusCode).json({
+      type: err.type,
       message: err.message,
     });
   } else {

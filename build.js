@@ -12,6 +12,7 @@ const env = {
   'process.env.AWS_REGION': JSON.stringify(process.env.AWS_REGION),
   'process.env.AWS_ACCESS_KEY_ID': JSON.stringify(process.env.AWS_ACCESS_KEY_ID),
   'process.env.AWS_SECRET_KEY': JSON.stringify(process.env.AWS_SECRET_KEY),
+  'process.env.LOGIN_OTP_TEMPLATE_ID': JSON.stringify(process.env.LOGIN_OTP_TEMPLATE_ID)
 };
 
 

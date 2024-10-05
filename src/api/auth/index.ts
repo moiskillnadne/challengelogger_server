@@ -8,7 +8,7 @@ import { jwtService } from '~/core/utils';
 import { SendGridService } from '~/integration/SendGrid';
 import { redis } from '~/redis';
 import { UserCrudService } from '~/shared/user/User.crud';
-import { getEmailLoginTemplate } from '~/templates/getEmailLoginTemplate';
+// import { getEmailLoginTemplate } from '~/templates/getEmailLoginTemplate';
 
 const route = express.Router();
 
@@ -42,22 +42,26 @@ route.post(
 
       const mailer = new SendGridService();
 
-      await mailer.sendEmail({
+      await mailer.sendTemplateEmail({
         to: validationResult.data.email,
         subject: isRuLang
           ? 'Добро пожаловать в Challenge Logger'
           : 'Welcome to our Challenge Logger',
-        html: getEmailLoginTemplate({
-          h2: isRuLang
+        templateId: process.env.LOGIN_OTP_TEMPLATE_ID ?? '',
+        dynamicTemplateData: {
+          loginEmailSubject: isRuLang
             ? `Добро пожаловать в Challenge Logger!`
             : 'Welcome to our Challenge Logger',
-          p: isRuLang
-            ? `Вы вошли в систему как ${validationResult.data.email}. Ваш одноразовый пароль - ${OTP}`
-            : `You are logged in as ${validationResult.data.email}. Your one time password - ${OTP}`,
-          passwordExpiresIn: isRuLang
-            ? 'Ваш одноразовый пароль истечет через 15 минут.'
-            : 'Your one-time password will expire in 15 minutes.',
-        }),
+
+          welcomeTitle: isRuLang
+            ? `Добро пожаловать в Challenge Logger!`
+            : 'Welcome to our Challenge Logger',
+          loginOTPexplanation: isRuLang
+            ? `Вы вошли в систему как ${validationResult.data.email}. Ваш одноразовый пароль истечет через 15 минут.`
+            : `You are logged in as ${validationResult.data.email}. Your one-time password will expire in 15 minutes.`,
+
+          userOTP: OTP,
+        },
       });
 
       if (isCreated) {

@@ -8,6 +8,13 @@ interface EmailBody {
   html: string;
 }
 
+interface TemplateEmailBody {
+  to: string;
+  subject: string;
+  templateId: string;
+  dynamicTemplateData: Record<string, string>;
+}
+
 export class SendGridService {
   private sender = 'no-reply@riabkov.com';
 
@@ -22,6 +29,24 @@ export class SendGridService {
         to: body.to,
         subject: body.subject,
         html: body.html,
+      });
+
+      logger.info(`Email sent to ${body.to}`);
+    } catch (error) {
+      logger.error('Error sending email', error);
+    }
+  }
+
+  public async sendTemplateEmail(body: TemplateEmailBody): Promise<void> {
+    try {
+      await sendGridMail.send({
+        from: this.sender,
+        to: body.to,
+        subject: body.subject,
+        templateId: body.templateId,
+        dynamicTemplateData: {
+          ...body.dynamicTemplateData,
+        },
       });
 
       logger.info(`Email sent to ${body.to}`);

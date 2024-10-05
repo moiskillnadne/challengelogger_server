@@ -8,6 +8,12 @@ import { UserCrudService } from '~/shared/user/User.crud';
 jest.mock('~/core/utils');
 jest.mock('~/shared/user/User.crud');
 
+jest.mock('../../logger', () => ({
+  logger: {
+    error: jest.fn((message: string) => console.error(message)),
+  },
+}));
+
 describe('authMiddleware', () => {
   let mockRequest: Partial<Request>;
   let mockResponse: Partial<Response>;
@@ -43,7 +49,7 @@ describe('authMiddleware', () => {
 
     expect(mockResponse.status).toHaveBeenCalledWith(401);
     expect(mockResponse.json).toHaveBeenCalledWith({
-      message: 'Invalid token',
+      message: 'Authentication required: Cookies undefined',
     });
     expect(mockNext).not.toHaveBeenCalled();
   });
@@ -61,15 +67,32 @@ describe('authMiddleware', () => {
 
     expect(mockResponse.status).toHaveBeenCalledWith(401);
     expect(mockResponse.json).toHaveBeenCalledWith({
-      message: 'Invalid token',
+      message: 'Authentication required: Cookies undefined',
     });
     expect(mockNext).not.toHaveBeenCalled();
   });
 
-  it('should return 401 if token is invalid', async () => {
-    (jwtService.verifyToken as jest.Mock).mockImplementation(() => {
-      throw new Error('Invalid token');
+  it('should return 400 if decoded JWT is a string', async () => {
+    (jwtService.verifyToken as jest.Mock).mockReturnValue(
+      'invalid-token-string',
+    );
+
+    await authMiddleware(
+      mockRequest as Request,
+      mockResponse as Response,
+      mockNext,
+    );
+
+    expect(mockResponse.status).toHaveBeenCalledWith(400);
+    expect(mockResponse.json).toHaveBeenCalledWith({
+      message:
+        'Authentication required: Decoded JWT is string for some reason. Decoded result is invalid-token-string',
     });
+    expect(mockNext).not.toHaveBeenCalled();
+  });
+
+  it('should return 401 if email is missing in decoded JWT', async () => {
+    (jwtService.verifyToken as jest.Mock).mockReturnValue({});
 
     await authMiddleware(
       mockRequest as Request,
@@ -79,7 +102,7 @@ describe('authMiddleware', () => {
 
     expect(mockResponse.status).toHaveBeenCalledWith(401);
     expect(mockResponse.json).toHaveBeenCalledWith({
-      message: 'Invalid token',
+      message: 'Authentication required: Email is undefined',
     });
     expect(mockNext).not.toHaveBeenCalled();
   });
@@ -98,7 +121,7 @@ describe('authMiddleware', () => {
 
     expect(mockResponse.status).toHaveBeenCalledWith(401);
     expect(mockResponse.json).toHaveBeenCalledWith({
-      message: 'User not found',
+      message: 'Authentication required: User not found',
     });
     expect(mockNext).not.toHaveBeenCalled();
   });

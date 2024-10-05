@@ -3,4 +3,5 @@ export const ErrorTypes = {
   Unauthorized: 'UNAUTHORIZED_ERROR',
   BadRequest: 'BAD_REQUEST_ERROR',
   UnprocessableEntity: 'UNPROCESSABLE_ENTITY_ERROR',
+  NotFound: 'ENTITY_NOT_FOUND',
 };

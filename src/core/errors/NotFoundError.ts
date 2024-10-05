@@ -2,11 +2,11 @@ import { AppBaseError } from './AppBaseError';
 
 import { ErrorTypes } from '~/core/dictionary/error.types';
 
-export class ValidationError extends AppBaseError {
+export class NotFoundError extends AppBaseError {
   constructor(message: string) {
     super({
-      type: ErrorTypes.Validation,
-      statusCode: 400,
+      type: ErrorTypes.NotFound,
+      statusCode: 404,
       message,
     });
   }

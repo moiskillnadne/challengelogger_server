@@ -1,8 +1,6 @@
 import cookie from 'cookie';
 import { NextFunction, Request, Response } from 'express';
 
-import { logger } from '../../logger';
-
 import { BadRequestError, UnauthorizedError } from '~/core/errors';
 import { jwtService } from '~/core/utils';
 import { User } from '~/database/models/User';
@@ -69,18 +67,6 @@ export const authMiddleware = async (
 
     next();
   } catch (err: unknown) {
-    logger.error(err);
-
-    if (err instanceof UnauthorizedError) {
-      return res.status(401).json({ message: err.message });
-    }
-
-    if (err instanceof BadRequestError) {
-      return res.status(400).json({ message: err.message });
-    }
-
-    return res
-      .status(500)
-      .json({ message: `${middlewarePrefix} Internal server error` });
+    return next(err);
   }
 };

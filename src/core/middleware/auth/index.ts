@@ -1,6 +1,9 @@
 import cookie from 'cookie';
 import { NextFunction, Request, Response } from 'express';
 
+import { logger } from '../../logger';
+
+import { BadRequestError, UnauthorizedError } from '~/core/errors';
 import { jwtService } from '~/core/utils';
 import { User } from '~/database/models/User';
 import { UserCrudService } from '~/shared/user/User.crud';
@@ -21,11 +24,13 @@ export const authMiddleware = async (
   res: Response,
   next: NextFunction,
 ) => {
+  const middlewarePrefix: string = 'Authentication required:';
+
   try {
     const reqCookie = req.headers.cookie;
 
     if (!reqCookie) {
-      throw new Error('Cookies undefined');
+      throw new UnauthorizedError(`${middlewarePrefix} Cookies undefined`);
     }
 
     const cookies = cookie.parse(reqCookie);
@@ -33,27 +38,29 @@ export const authMiddleware = async (
     const authToken = cookies['authToken'] ?? null;
 
     if (!authToken) {
-      throw new Error('Auth token undefined');
+      throw new UnauthorizedError(
+        `${middlewarePrefix} Auth token is undefined`,
+      );
     }
 
     const decoded = jwtService.verifyToken(authToken);
 
     if (typeof decoded === 'string') {
-      throw new Error(
-        `Decoded JWT is string for some reason. Decoded result is ${decoded}`,
+      throw new BadRequestError(
+        `${middlewarePrefix} Decoded JWT is string for some reason. Decoded result is ${decoded}`,
       );
     }
 
     const emailFromToken: string | null = decoded['email'] ?? null;
 
     if (!emailFromToken) {
-      throw new Error(`User email in token is undefined`);
+      throw new UnauthorizedError(`${middlewarePrefix} Email is undefined`);
     }
 
     const user = await UserCrudService.getUserByEmail(emailFromToken);
 
     if (!user) {
-      return res.status(401).json({ message: 'User not found' });
+      throw new UnauthorizedError(`${middlewarePrefix} User not found`);
     }
 
     const jsonUser = user?.toJSON() as unknown as User;
@@ -62,8 +69,18 @@ export const authMiddleware = async (
 
     next();
   } catch (err: unknown) {
-    console.error(err);
+    logger.error(err);
 
-    return res.status(401).json({ message: 'Invalid token' });
+    if (err instanceof UnauthorizedError) {
+      return res.status(401).json({ message: err.message });
+    }
+
+    if (err instanceof BadRequestError) {
+      return res.status(400).json({ message: err.message });
+    }
+
+    return res
+      .status(500)
+      .json({ message: `${middlewarePrefix} Internal server error` });
   }
 };

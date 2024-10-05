@@ -8,7 +8,7 @@ import {
   CreateChallengeSchema,
 } from './validation.schema';
 
-import { ZodValidationError } from '~/core/errors/ZodValidationError';
+import { ValidationError } from '~/core/errors';
 import { authMiddleware, AuthorizedRequest } from '~/core/middleware/auth';
 
 const route = express.Router();
@@ -93,7 +93,7 @@ route.post('/create', async (req: Request, res: Response) => {
   const parsedBody = CreateChallengeSchema.safeParse(req.body);
 
   if (parsedBody.error) {
-    throw new ZodValidationError(parsedBody.error);
+    throw new ValidationError(parsedBody.error.errors[0].message);
   }
 
   try {
@@ -131,7 +131,7 @@ route.post('/check-in', async (req: Request, res: Response) => {
   const parsedBody = CreateChallengeProgressSchema.safeParse(req.body);
 
   if (parsedBody.error) {
-    throw new ZodValidationError(parsedBody.error);
+    throw new ValidationError(parsedBody.error.errors[0].message);
   }
 
   try {

@@ -3,7 +3,7 @@ import { ValidationErrorItem } from 'sequelize';
 
 import { ConfirmLoginBodySchema, LoginBodySchema } from './validation.schema';
 
-import { ZodValidationError } from '~/core/errors/ZodValidationError';
+import { ValidationError } from '~/core/errors/';
 import { generateOTP } from '~/core/utils';
 import { jwtService } from '~/core/utils';
 import { SendGridService } from '~/integration/SendGrid';
@@ -17,7 +17,7 @@ route.post('/login', async (req: Request, res: Response) => {
   const validationResult = LoginBodySchema.safeParse(req.body);
 
   if (validationResult.success === false) {
-    throw new ZodValidationError(validationResult.error);
+    throw new ValidationError(validationResult.error.errors[0].message);
   }
 
   const language = req.headers['accept-language'] ?? 'RU-ru';
@@ -96,7 +96,7 @@ route.post('/confirm-login', async (req: Request, res: Response) => {
   const validationResult = ConfirmLoginBodySchema.safeParse(req.body);
 
   if (validationResult.success === false) {
-    throw new ZodValidationError(validationResult.error);
+    throw new ValidationError(validationResult.error.errors[0].message);
   }
 
   const OTP = await redis.get(validationResult.data.email);

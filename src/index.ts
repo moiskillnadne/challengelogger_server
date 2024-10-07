@@ -1,7 +1,6 @@
 import '~/integration/Sentry';
 
 import * as Sentry from '@sentry/node';
-import cors from 'cors';
 import express, { Request, Response } from 'express';
 import helmet from 'helmet';
 
@@ -30,20 +29,7 @@ process.on('unhandledRejection', (reason: unknown) => {
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const allowedOrigins = [
-  'https://challenge-tracker.riabkov.com',
-  'https://challenge-tracker-api.riabkov.com',
-  'http://localhost:5173',
-];
-
-const corsOptions = {
-  origin: allowedOrigins,
-  credentials: true,
-  allowedHeaders: ['x-cl-security-check'],
-};
-
 app.use(helmet({ crossOriginResourcePolicy: false }));
-app.use(cors(corsOptions));
 app.use(express.json({ limit: '10kb' }));
 
 app.use(httpLogger);
@@ -57,8 +43,6 @@ app.use('/protected/challenge', ChallengeRoute);
 app.get('/healthcheck', (req: Request, res: Response) => {
   return res.status(200).send('OK');
 });
-
-app.options('*', cors(corsOptions));
 
 app.all('*', (req: Request, res: Response) => {
   return res.status(404).json({

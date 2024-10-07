@@ -39,6 +39,7 @@ const allowedOrigins = [
 const corsOptions = {
   origin: allowedOrigins,
   credentials: true,
+  allowedHeaders: ['x-cl-security-check'],
 };
 
 app.use(helmet({ crossOriginResourcePolicy: false }));

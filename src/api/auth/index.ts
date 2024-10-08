@@ -3,12 +3,12 @@ import express, { NextFunction, Request, Response } from 'express';
 import { ConfirmLoginBodySchema, LoginBodySchema } from './validation.schema';
 
 import { BadRequestError, UnprocessableEntityError } from '~/core/errors/';
+import { authMiddleware } from '~/core/middleware/auth';
 import { generateOTP } from '~/core/utils';
 import { jwtService } from '~/core/utils';
 import { SendGridService } from '~/integration/SendGrid';
 import { redis } from '~/redis';
 import { UserCrudService } from '~/shared/user/User.crud';
-// import { getEmailLoginTemplate } from '~/templates/getEmailLoginTemplate';
 
 const route = express.Router();
 
@@ -137,5 +137,16 @@ route.post(
     }
   },
 );
+
+route.post('/logout', authMiddleware, (req: Request, res: Response) => {
+  res.clearCookie('authToken');
+
+  return res.status(200).json({
+    type: 'LOGOUT_SUCCESS',
+    statusCode: 204,
+    message: 'Logout successful',
+    isSuccess: true,
+  });
+});
 
 export default route;

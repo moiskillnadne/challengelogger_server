@@ -31,5 +31,12 @@ export const UserChallengeProgress = Sequelize.define(
       onDelete: 'CASCADE',
     },
   },
-  {},
+  {
+    indexes: [
+      {
+        unique: true,
+        fields: ['userChallengeId', 'checkpointDate'],
+      },
+    ],
+  },
 );

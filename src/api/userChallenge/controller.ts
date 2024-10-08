@@ -84,6 +84,39 @@ route.get(
   },
 );
 
+route.delete(
+  '/:challengeId',
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user;
+
+    if (!isAuthenticated(user)) {
+      return next(new UnauthorizedError(ErrorMessages.unauthorized));
+    }
+
+    const challengeId = req.params.challengeId;
+
+    try {
+      const deleteResult = await UserChallengeCrud.deleteOneByParams({
+        id: challengeId,
+        userId: user.id,
+      });
+
+      if (deleteResult === 0) {
+        throw new NotFoundError('Challenge not found');
+      }
+
+      return res.status(200).json({
+        type: 'CHALLENGE_DELETED',
+        statusCode: 200,
+        message: 'Challenge deleted successfully',
+        isSuccess: true,
+      });
+    } catch (error: unknown) {
+      return next(error);
+    }
+  },
+);
+
 route.post(
   '/create',
   async (req: Request, res: Response, next: NextFunction) => {
@@ -144,6 +177,53 @@ route.post(
         details: {
           challenge: createdEntity,
         },
+      });
+    } catch (error: unknown) {
+      return next(error);
+    }
+  },
+);
+
+route.delete(
+  '/check-in/:progressId',
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user;
+
+    if (!isAuthenticated(user)) {
+      return next(new UnauthorizedError(ErrorMessages.unauthorized));
+    }
+
+    const progressId = req.params.progressId;
+
+    try {
+      // Find progress by id and join the challenge entity
+      const dbresult =
+        await UserChallengeProgressCrud.findByIdJoinChallenge(progressId);
+
+      if (!dbresult) {
+        throw new NotFoundError(
+          `Progress not found. Progress id: ${progressId}`,
+        );
+      }
+
+      const challengeOwnerId = dbresult?.dataValues.userChallenge.userId;
+
+      if (challengeOwnerId !== user.id) {
+        throw new UnauthorizedError('You are not the owner of the challenge.');
+      }
+
+      const deleteResult =
+        await UserChallengeProgressCrud.deleteOne(progressId);
+
+      if (deleteResult === 0) {
+        throw new NotFoundError('Progress not found');
+      }
+
+      return res.status(200).json({
+        type: 'PROGRESS_DELETED',
+        statusCode: 200,
+        message: 'Progress deleted successfully',
+        isSuccess: true,
       });
     } catch (error: unknown) {
       return next(error);

@@ -23,4 +23,13 @@ export class UserChallengeCrud {
   static create(payload: CreateChallengeDBPayload) {
     return UserChallenge.create(payload);
   }
+
+  static deleteOneByParams(params: FindByParams) {
+    return UserChallenge.destroy({
+      where: {
+        id: params.id,
+        userId: params.userId,
+      },
+    });
+  }
 }

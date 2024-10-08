@@ -15,6 +15,9 @@ import UserRoute from '~/api/user';
 import ChallengeRoute from '~/api/userChallenge/controller';
 import { Sequelize } from '~/database';
 
+// Setup associations
+import '~/database/models/association';
+
 process.on('uncaughtException', (err: Error) => {
   logger.error(`Uncaught Exception: ${err.message}`);
   Sentry.captureException(err);

@@ -10,6 +10,8 @@ import {
   UnprocessableEntityError,
 } from '~/core/errors';
 
+const SEQUELIZE_UNIQUE_CONSTRAINT_ERROR = 'SequelizeUniqueConstraintError';
+
 export const exceptionsHandlerMiddleware = (
   err: unknown,
   req: Request,
@@ -17,7 +19,7 @@ export const exceptionsHandlerMiddleware = (
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   next: NextFunction,
 ) => {
-  const traceId = 'N/A'; // TODO: Will be added soon
+  const traceId = req.traceId ?? 'N/A';
 
   Sentry.captureException(err);
 
@@ -35,6 +37,16 @@ export const exceptionsHandlerMiddleware = (
       type: err.type,
       message: err.message,
     });
+  }
+
+  if (err instanceof Error) {
+    if (err.name === SEQUELIZE_UNIQUE_CONSTRAINT_ERROR) {
+      return res.status(409).json({
+        isError: true,
+        type: 'UNIQUE_CONSTRAINT_ERROR',
+        message: 'Unique constraint error',
+      });
+    }
   }
 
   return res.status(500).json({

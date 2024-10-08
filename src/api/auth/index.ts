@@ -141,7 +141,7 @@ route.post(
 route.post('/logout', authMiddleware, (req: Request, res: Response) => {
   res.clearCookie('authToken');
 
-  return res.status(200).json({
+  return res.status(204).json({
     type: 'LOGOUT_SUCCESS',
     statusCode: 204,
     message: 'Logout successful',

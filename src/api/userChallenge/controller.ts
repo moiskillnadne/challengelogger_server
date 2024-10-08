@@ -84,6 +84,39 @@ route.get(
   },
 );
 
+route.delete(
+  '/:challengeId',
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user;
+
+    if (!isAuthenticated(user)) {
+      return next(new UnauthorizedError(ErrorMessages.unauthorized));
+    }
+
+    const challengeId = req.params.challengeId;
+
+    try {
+      const deleteResult = await UserChallengeCrud.deleteOneByParams({
+        id: challengeId,
+        userId: user.id,
+      });
+
+      if (deleteResult === 0) {
+        throw new NotFoundError('Challenge not found');
+      }
+
+      return res.status(200).json({
+        type: 'CHALLENGE_DELETED',
+        statusCode: 200,
+        message: 'Challenge deleted successfully',
+        isSuccess: true,
+      });
+    } catch (error: unknown) {
+      return next(error);
+    }
+  },
+);
+
 route.post(
   '/create',
   async (req: Request, res: Response, next: NextFunction) => {

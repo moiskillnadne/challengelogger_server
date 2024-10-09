@@ -2,6 +2,7 @@ import express, { NextFunction, Request, Response } from 'express';
 
 import { ConfirmLoginBodySchema, LoginBodySchema } from './validation.schema';
 
+import { ONE_WEEK } from '~/core/constants';
 import { BadRequestError, UnprocessableEntityError } from '~/core/errors/';
 import { authMiddleware } from '~/core/middleware/auth';
 import { generateOTP } from '~/core/utils';
@@ -120,8 +121,8 @@ route.post(
       res.cookie('authToken', token, {
         httpOnly: true,
         secure: true,
-        maxAge: 24 * 60 * 60 * 1000,
-        sameSite: 'none',
+        maxAge: ONE_WEEK,
+        sameSite: 'lax',
       });
 
       await redis.del(validationResult.data.email);

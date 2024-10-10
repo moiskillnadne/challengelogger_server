@@ -11,9 +11,12 @@ class JWTService {
     this.secret = process.env.JWT_SECRET_KEY;
   }
 
-  public generateToken(payload: Record<string, unknown>): string {
+  public generateToken(
+    payload: Record<string, unknown>,
+    expiresIn: number,
+  ): string {
     return jwt.sign(payload, this.secret, {
-      expiresIn: 86400000, // 1 day
+      expiresIn,
     });
   }
 

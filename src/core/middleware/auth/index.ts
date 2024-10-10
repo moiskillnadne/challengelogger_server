@@ -22,15 +22,15 @@ export const authMiddleware = async (
 
     const cookies = cookie.parse(reqCookie);
 
-    const authToken = cookies['authToken'] ?? null;
+    const accessToken = cookies['accessToken'] ?? null;
 
-    if (!authToken) {
+    if (!accessToken) {
       throw new UnauthorizedError(
         `${middlewarePrefix} Auth token is undefined`,
       );
     }
 
-    const decoded = jwtService.verifyToken(authToken);
+    const decoded = jwtService.verifyToken(accessToken);
 
     if (typeof decoded === 'string') {
       throw new BadRequestError(

@@ -1,13 +1,22 @@
+import cookie from 'cookie';
 import express, { NextFunction, Request, Response } from 'express';
 
 import { ConfirmLoginBodySchema, LoginBodySchema } from './validation.schema';
 
-import { BadRequestError, UnprocessableEntityError } from '~/core/errors/';
+import { ONE_MINUTE, ONE_MONTH } from '~/core/constants';
+import { ErrorMessages } from '~/core/dictionary/error.messages';
+import {
+  BadRequestError,
+  UnauthorizedError,
+  UnprocessableEntityError,
+} from '~/core/errors/';
 import { authMiddleware } from '~/core/middleware/auth';
 import { generateOTP } from '~/core/utils';
 import { jwtService } from '~/core/utils';
 import { SendGridService } from '~/integration/SendGrid';
 import { redis } from '~/redis';
+import { mapToOTPKey, mapToRefreshTokenKey } from '~/redis/mappers';
+import { isAuthenticated } from '~/shared/user';
 import { UserCrudService } from '~/shared/user/User.crud';
 
 const route = express.Router();
@@ -36,7 +45,7 @@ route.post(
       const OTP = generateOTP();
 
       // Save OTP to Redis
-      await redis.set(validationResult.data.email, OTP, {
+      await redis.set(mapToOTPKey(validationResult.data.email), OTP, {
         EX: 60 * 15, // 15 minutes
       });
 
@@ -103,7 +112,7 @@ route.post(
         );
       }
 
-      const OTP = await redis.get(validationResult.data.email);
+      const OTP = await redis.get(mapToOTPKey(validationResult.data.email));
 
       if (OTP === null) {
         throw new BadRequestError('Code has expired');
@@ -113,18 +122,45 @@ route.post(
         throw new BadRequestError('Wrong code');
       }
 
-      const token = jwtService.generateToken({
-        email: validationResult.data.email,
-      });
+      const accessToken = jwtService.generateToken(
+        {
+          email: validationResult.data.email,
+        },
+        ONE_MINUTE * 15,
+      );
 
-      res.cookie('authToken', token, {
+      const refreshToken = jwtService.generateToken(
+        {
+          email: validationResult.data.email,
+        },
+        ONE_MONTH,
+      );
+
+      res.cookie('accessToken', accessToken, {
         httpOnly: true,
         secure: true,
-        maxAge: 24 * 60 * 60 * 1000,
-        sameSite: 'none',
+        maxAge: ONE_MINUTE * 15,
+        sameSite: 'lax',
       });
 
-      await redis.del(validationResult.data.email);
+      res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: true,
+        maxAge: ONE_MONTH,
+        sameSite: 'lax',
+        path: '/auth/refresh-token',
+      });
+
+      // Save refresh token to Redis (White list of refresh tokens)
+      await redis.set(
+        mapToRefreshTokenKey(validationResult.data.email),
+        refreshToken,
+        {
+          EX: ONE_MONTH,
+        },
+      );
+
+      await redis.del(mapToOTPKey(validationResult.data.email));
 
       return res.status(200).json({
         type: 'LOGIN_SUCCESS',
@@ -138,15 +174,96 @@ route.post(
   },
 );
 
-route.post('/logout', authMiddleware, (req: Request, res: Response) => {
-  res.clearCookie('authToken');
+route.post(
+  '/logout',
+  authMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user;
 
-  return res.status(204).json({
-    type: 'LOGOUT_SUCCESS',
-    statusCode: 204,
-    message: 'Logout successful',
-    isSuccess: true,
-  });
-});
+    if (!isAuthenticated(user)) {
+      return next(new UnauthorizedError(ErrorMessages.unauthorized));
+    }
+
+    res.clearCookie('accessToken');
+    res.clearCookie('refreshToken');
+
+    await redis.del(mapToRefreshTokenKey(user.email));
+
+    return res.status(204).json({
+      type: 'LOGOUT_SUCCESS',
+      statusCode: 204,
+      message: 'Logout successful',
+      isSuccess: true,
+    });
+  },
+);
+
+route.post(
+  '/refresh-token',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const reqCookie = req.headers.cookie;
+
+      if (!reqCookie) {
+        throw new UnprocessableEntityError(`Cookies is undefined`);
+      }
+
+      const cookies = cookie.parse(reqCookie);
+
+      const refreshToken = cookies['refreshToken'] ?? null;
+
+      const decoded = jwtService.verifyToken(refreshToken);
+
+      if (typeof decoded === 'string') {
+        throw new UnprocessableEntityError(
+          'Decoded refreshToken is string for some reason',
+        );
+      }
+
+      const emailFromToken: string | null = decoded['email'] ?? null;
+
+      if (!emailFromToken) {
+        throw new UnprocessableEntityError('Email is undefined');
+      }
+
+      const refreshTokenFromRedis = await redis.get(
+        mapToRefreshTokenKey(emailFromToken),
+      );
+
+      if (!refreshTokenFromRedis) {
+        throw new UnauthorizedError('Refresh token is expired');
+      }
+
+      const accessToken = jwtService.generateToken(
+        {
+          email: emailFromToken,
+        },
+        ONE_MINUTE * 15,
+      );
+
+      res.cookie('accessToken', accessToken, {
+        httpOnly: true,
+        secure: true,
+        maxAge: ONE_MINUTE * 15,
+        sameSite: 'lax',
+      });
+
+      // TODO: Check the fingerprint of the device, if it's the same like "TRUST DEVICE" of user
+      // then refresh the refresh token as well
+
+      // Also need to remove old refresh token from Redis
+      // and save new one
+
+      return res.status(200).json({
+        type: 'TOKEN_REFRESHED',
+        statusCode: 200,
+        message: 'Token refreshed',
+        isSuccess: true,
+      });
+    } catch (error: unknown) {
+      return next(error);
+    }
+  },
+);
 
 export default route;

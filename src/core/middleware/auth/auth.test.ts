@@ -17,7 +17,7 @@ describe('authMiddleware', () => {
   beforeEach(() => {
     mockRequest = {
       headers: {
-        cookie: 'authToken=testToken',
+        cookie: 'accessToken=testToken',
       },
     };
 

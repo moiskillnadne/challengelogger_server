@@ -10,26 +10,26 @@ const route = express.Router();
 
 route.use(authMiddleware);
 
-const getFingerprint = (req: Request) => {
-  const userAgent = req.headers['user-agent'] || '';
-  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-  const acceptLanguage = req.headers['accept-language'] || '';
-  const platform = req.headers['sec-ch-ua-platform'] || ''; // Платформа, например, "Windows" или "macOS"
+// const getFingerprint = (req: Request) => {
+//   const userAgent = req.headers['user-agent'] || '';
+//   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+//   const acceptLanguage = req.headers['accept-language'] || '';
+//   const platform = req.headers['sec-ch-ua-platform'] || ''; // Платформа, например, "Windows" или "macOS"
 
-  logger.info(`User-Agent: ${userAgent}`);
-  logger.info(`IP: ${ip}`);
-  logger.info(`Accept-Language: ${acceptLanguage}`);
-  logger.info(`Platform: ${platform}`);
-};
+//   logger.info(`User-Agent: ${userAgent}`);
+//   logger.info(`IP: ${ip}`);
+//   logger.info(`Accept-Language: ${acceptLanguage}`);
+//   logger.info(`Platform: ${platform}`);
+// };
 
 route.get('/', (req: Request, res: Response, next: NextFunction) => {
   const user = req.user;
 
+  logger.info(`[GET /protected/user] User: ${JSON.stringify(user)}`);
+
   if (!isAuthenticated(user)) {
     return next(new UnauthorizedError(ErrorMessages.unauthorized));
   }
-
-  getFingerprint(req);
 
   return res.status(200).json({
     type: 'USER_FETCHED',

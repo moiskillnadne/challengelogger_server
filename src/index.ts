@@ -34,12 +34,14 @@ process.on('unhandledRejection', (reason: unknown) => {
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(
-  cors({
-    origin: ['http://localhost:5173', 'http://localhost:3000'],
-    credentials: true,
-  }),
-);
+if (process.env.ENV === 'dev') {
+  app.use(
+    cors({
+      origin: ['http://localhost:5173', 'http://localhost:3000'],
+      credentials: true,
+    }),
+  );
+}
 
 app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(express.json({ limit: '10kb' }));

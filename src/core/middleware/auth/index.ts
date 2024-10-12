@@ -14,6 +14,8 @@ export const authMiddleware = async (
 ) => {
   const middlewarePrefix: string = 'Authentication required:';
 
+  logger.info(`[authMiddleware] Request URL: ${req.url} start auth validation`);
+
   try {
     const cookies = req.cookies;
 
@@ -33,6 +35,8 @@ export const authMiddleware = async (
 
     const decoded = jwtService.verifyToken(accessToken);
 
+    logger.info(`[authMiddleware] Decoded JWT: ${JSON.stringify(decoded)}`);
+
     if (typeof decoded === 'string') {
       throw new BadRequestError(
         `${middlewarePrefix} Decoded JWT is string for some reason. Decoded result is ${decoded}`,
@@ -45,11 +49,15 @@ export const authMiddleware = async (
       throw new UnauthorizedError(`${middlewarePrefix} Email is undefined`);
     }
 
+    logger.info(`[authMiddleware] Email from token: ${emailFromToken}`);
+
     const user = await UserCrudService.getUserByEmail(emailFromToken);
 
     if (!user) {
       throw new UnauthorizedError(`${middlewarePrefix} User not found`);
     }
+
+    logger.info(`[authMiddleware] User found: ${JSON.stringify(user)}`);
 
     req.user = user?.toJSON() as unknown as User;
 

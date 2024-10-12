@@ -13,12 +13,9 @@ import {
   UnauthorizedError,
   UnprocessableEntityError,
 } from '~/core/errors';
-import { authMiddleware } from '~/core/middleware/auth';
 import { isAuthenticated } from '~/shared/user';
 
 const route = express.Router();
-
-route.use(authMiddleware);
 
 route.get('/', async (req: Request, res: Response, next: NextFunction) => {
   const user = req.user;

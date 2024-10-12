@@ -3,12 +3,9 @@ import express, { NextFunction, Request, Response } from 'express';
 import { ErrorMessages } from '~/core/dictionary/error.messages';
 import { UnauthorizedError } from '~/core/errors';
 import { logger } from '~/core/logger';
-// import { authMiddleware } from '~/core/middleware/auth';
 import { isAuthenticated } from '~/shared/user';
 
 const route = express.Router();
-
-// route.use(authMiddleware);
 
 route.get('/', (req: Request, res: Response, next: NextFunction) => {
   const user = req.user;

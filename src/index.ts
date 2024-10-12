@@ -8,6 +8,7 @@ import helmet from 'helmet';
 
 import { logger } from './core/logger';
 import { httpLogger } from './core/logger/middleware';
+import { authMiddleware } from './core/middleware/auth';
 import { exceptionsHandlerMiddleware } from './core/middleware/exceptions';
 
 import { redis } from './redis';
@@ -51,9 +52,9 @@ app.use(httpLogger);
 
 app.use('/auth', AuthRouter);
 
-app.use('/protected/user', UserRoute);
+app.use('/protected/user', authMiddleware, UserRoute);
 
-app.use('/protected/challenge', ChallengeRoute);
+app.use('/protected/challenge', authMiddleware, ChallengeRoute);
 
 app.get('/healthcheck', (req: Request, res: Response) => {
   return res.status(200).send('OK');

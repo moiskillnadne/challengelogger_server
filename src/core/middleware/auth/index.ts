@@ -68,6 +68,7 @@ export const authMiddleware = async (
 
     next();
   } catch (err: unknown) {
+    logger.error(`[authMiddleware] Error: ${err}`);
     return next(err);
   }
 };

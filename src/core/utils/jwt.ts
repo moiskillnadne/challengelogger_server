@@ -20,7 +20,7 @@ class JWTService {
   ): string {
     try {
       return jwt.sign(payload, this.secret, {
-        expiresIn,
+        expiresIn: 86400000,
       });
     } catch (error: unknown) {
       logger.error(`[JWTService.generateToken] ${error}`);

@@ -138,7 +138,7 @@ route.post(
       res.cookie('accessToken', accessToken, {
         httpOnly: true,
         secure: true,
-        maxAge: ONE_DAY,
+        maxAge: 24 * 60 * 60 * 1000,
         sameSite: 'none',
       });
 

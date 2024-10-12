@@ -201,12 +201,6 @@ route.post(
   '/refresh-token',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const reqCookie = req.headers.cookie;
-
-      if (!reqCookie) {
-        throw new UnprocessableEntityError(`Cookies is undefined`);
-      }
-
       const cookies = req.cookies;
 
       const refreshToken = cookies['refreshToken'] ?? null;

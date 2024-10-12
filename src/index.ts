@@ -1,10 +1,11 @@
 import '~/integration/Sentry';
 
 import * as Sentry from '@sentry/node';
-import cookieParser from 'cookie-parser';
+// import cookieParser from 'cookie-parser';
+import * as cookie from 'cookie';
 import cors from 'cors';
-import express, { Request, Response } from 'express';
-import helmet from 'helmet';
+import express, { NextFunction, Request, Response } from 'express';
+// import helmet from 'helmet';
 
 import { logger } from './core/logger';
 import { httpLogger } from './core/logger/middleware';
@@ -44,9 +45,21 @@ if (process.env.ENV === 'dev') {
   );
 }
 
-app.use(helmet({ crossOriginResourcePolicy: false }));
+// app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(express.json({ limit: '10kb' }));
-app.use(cookieParser());
+// app.use(cookieParser());
+
+app.use((req: Request, res: Response, next: NextFunction) => {
+  logger.info(`[CookieParser] Parsing cookies: ${req.headers.cookie}`);
+
+  const cookies = cookie.parse(req.headers.cookie ?? '');
+
+  logger.info(`[CookieParser] Parsed cookies: ${JSON.stringify(cookies)}`);
+
+  req.cookies = cookies;
+
+  next();
+});
 
 app.use(httpLogger);
 

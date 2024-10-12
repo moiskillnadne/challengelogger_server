@@ -14,7 +14,12 @@ export const authMiddleware = async (
 ) => {
   const middlewarePrefix: string = 'Authentication required:';
 
-  logger.info(`[authMiddleware] Request URL: ${req.url} start auth validation`);
+  const url = req.url;
+  const method = req.method;
+
+  logger.info(
+    `[authMiddleware] Request URL: ${method} ${url} start auth validation`,
+  );
 
   try {
     const cookies = req.cookies;

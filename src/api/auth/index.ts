@@ -2,7 +2,7 @@ import express, { NextFunction, Request, Response } from 'express';
 
 import { ConfirmLoginBodySchema, LoginBodySchema } from './validation.schema';
 
-import { ONE_DAY } from '~/core/constants';
+import { ONE_DAY, ONE_YEAR } from '~/core/constants';
 import { ErrorMessages } from '~/core/dictionary/error.messages';
 import {
   BadRequestError,
@@ -125,7 +125,7 @@ route.post(
         {
           email: validationResult.data.email,
         },
-        ONE_DAY,
+        ONE_YEAR,
       );
 
       // const refreshToken = jwtService.generateToken(
@@ -138,7 +138,7 @@ route.post(
       res.cookie('accessToken', accessToken, {
         httpOnly: true,
         secure: true,
-        maxAge: ONE_DAY,
+        maxAge: ONE_YEAR,
         sameSite: 'none',
       });
 

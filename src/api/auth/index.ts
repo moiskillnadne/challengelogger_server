@@ -2,7 +2,7 @@ import express, { NextFunction, Request, Response } from 'express';
 
 import { ConfirmLoginBodySchema, LoginBodySchema } from './validation.schema';
 
-import { ONE_MINUTE, ONE_MONTH } from '~/core/constants';
+import { ONE_DAY, ONE_MONTH } from '~/core/constants';
 import { ErrorMessages } from '~/core/dictionary/error.messages';
 import {
   BadRequestError,
@@ -125,7 +125,7 @@ route.post(
         {
           email: validationResult.data.email,
         },
-        ONE_MINUTE * 15,
+        ONE_DAY,
       );
 
       const refreshToken = jwtService.generateToken(
@@ -138,7 +138,7 @@ route.post(
       res.cookie('accessToken', accessToken, {
         httpOnly: true,
         secure: true,
-        maxAge: ONE_MINUTE * 15,
+        maxAge: ONE_DAY,
         sameSite: 'none',
       });
 
@@ -231,14 +231,14 @@ route.post(
         {
           email: emailFromToken,
         },
-        ONE_MINUTE * 15,
+        ONE_DAY,
       );
 
       res.cookie('accessToken', accessToken, {
         httpOnly: true,
         secure: true,
-        maxAge: ONE_MINUTE * 15,
-        sameSite: 'lax',
+        maxAge: ONE_DAY,
+        sameSite: 'none',
       });
 
       // TODO: Check the fingerprint of the device, if it's the same like "TRUST DEVICE" of user

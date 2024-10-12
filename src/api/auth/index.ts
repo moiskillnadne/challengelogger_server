@@ -140,14 +140,14 @@ route.post(
         httpOnly: true,
         secure: true,
         maxAge: ONE_MINUTE * 15,
-        sameSite: 'lax',
+        sameSite: 'none',
       });
 
       res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
         secure: true,
         maxAge: ONE_MONTH,
-        sameSite: 'lax',
+        sameSite: 'none',
         path: '/auth/refresh-token',
       });
 

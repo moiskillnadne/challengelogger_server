@@ -25,11 +25,11 @@ const getFingerprint = (req: Request) => {
 route.get('/', (req: Request, res: Response, next: NextFunction) => {
   const user = req.user;
 
-  getFingerprint(req);
-
   if (!isAuthenticated(user)) {
     return next(new UnauthorizedError(ErrorMessages.unauthorized));
   }
+
+  getFingerprint(req);
 
   return res.status(200).json({
     type: 'USER_FETCHED',

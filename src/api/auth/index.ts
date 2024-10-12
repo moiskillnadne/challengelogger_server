@@ -1,4 +1,3 @@
-import cookie from 'cookie';
 import express, { NextFunction, Request, Response } from 'express';
 
 import { ConfirmLoginBodySchema, LoginBodySchema } from './validation.schema';
@@ -208,7 +207,7 @@ route.post(
         throw new UnprocessableEntityError(`Cookies is undefined`);
       }
 
-      const cookies = cookie.parse(reqCookie);
+      const cookies = req.cookies;
 
       const refreshToken = cookies['refreshToken'] ?? null;
 

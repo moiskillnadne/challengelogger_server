@@ -1,4 +1,3 @@
-import cookie from 'cookie';
 import { NextFunction, Request, Response } from 'express';
 
 import { logger } from '../../logger';
@@ -16,13 +15,11 @@ export const authMiddleware = async (
   const middlewarePrefix: string = 'Authentication required:';
 
   try {
-    const reqCookie = req.headers.cookie;
+    const cookies = req.cookies;
 
-    if (!reqCookie) {
+    if (!cookies) {
       throw new UnauthorizedError(`${middlewarePrefix} Cookies undefined`);
     }
-
-    const cookies = cookie.parse(reqCookie);
 
     logger.info(`[authMiddleware] Parsed Cookies: ${JSON.stringify(cookies)}`);
 

@@ -24,12 +24,15 @@ export const httpLogger = (req: Request, res: Response, next: NextFunction) => {
   const url = req.url;
   const method = req.method;
   const body = req.body;
+  const cookies = req.cookies;
 
   const formattedBody = !!Object.keys(body).length
     ? `Body: ${JSON.stringify(hideSensitiveFieldInBody(body))}`
     : '';
 
   logger.info(`[Request ${traceId}] ${method}: ${url} ${formattedBody}`);
+
+  logger.info(`[Request ${traceId}] Cookies: ${JSON.stringify(cookies)}`);
 
   res.on('finish', () => {
     const t1 = performance.now();

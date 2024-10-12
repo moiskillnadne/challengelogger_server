@@ -1,6 +1,7 @@
 import '~/integration/Sentry';
 
 import * as Sentry from '@sentry/node';
+import cookieParser from 'cookie-parser';
 import express, { Request, Response } from 'express';
 import helmet from 'helmet';
 
@@ -34,6 +35,7 @@ const PORT = process.env.PORT || 3000;
 
 app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(express.json({ limit: '10kb' }));
+app.use(cookieParser());
 
 app.use(httpLogger);
 

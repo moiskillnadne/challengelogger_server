@@ -1,6 +1,8 @@
 import cookie from 'cookie';
 import { NextFunction, Request, Response } from 'express';
 
+import { logger } from '../../logger';
+
 import { BadRequestError, UnauthorizedError } from '~/core/errors';
 import { jwtService } from '~/core/utils';
 import { User } from '~/shared/user';
@@ -21,6 +23,8 @@ export const authMiddleware = async (
     }
 
     const cookies = cookie.parse(reqCookie);
+
+    logger.info(`[authMiddleware] Parsed Cookies: ${JSON.stringify(cookies)}`);
 
     const accessToken = cookies['accessToken'] ?? null;
 

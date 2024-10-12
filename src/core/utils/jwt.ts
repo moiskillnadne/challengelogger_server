@@ -1,5 +1,8 @@
 import jwt from 'jsonwebtoken';
 
+import { BadRequestError } from '../errors';
+import { logger } from '../logger';
+
 class JWTService {
   private secret: string;
 
@@ -15,13 +18,27 @@ class JWTService {
     payload: Record<string, unknown>,
     expiresIn: number,
   ): string {
-    return jwt.sign(payload, this.secret, {
-      expiresIn,
-    });
+    try {
+      return jwt.sign(payload, this.secret, {
+        expiresIn,
+      });
+    } catch (error: unknown) {
+      logger.error(`[JWTService.generateToken] ${error}`);
+      throw new BadRequestError(
+        '[JWTService.generateToken] Can`t generate token',
+      );
+    }
   }
 
   public verifyToken(token: string) {
-    return jwt.verify(token, this.secret);
+    try {
+      return jwt.verify(token, this.secret);
+    } catch (error: unknown) {
+      logger.error(`[JWTService.verifyToken] ${error}`);
+      throw new BadRequestError(
+        '[JWTService.verifyToken] Invalid token. Can`t verify token',
+      );
+    }
   }
 }
 

@@ -2,7 +2,7 @@ import express, { NextFunction, Request, Response } from 'express';
 
 import { ConfirmLoginBodySchema, LoginBodySchema } from './validation.schema';
 
-import { ONE_DAY, ONE_YEAR } from '~/core/constants';
+import { Cookies, ONE_DAY, ONE_YEAR } from '~/core/constants';
 import { ErrorMessages } from '~/core/dictionary/error.messages';
 import {
   BadRequestError,
@@ -135,7 +135,7 @@ route.post(
       //   ONE_MONTH,
       // );
 
-      res.cookie('accessToken', accessToken, {
+      res.cookie(Cookies.accessToken, accessToken, {
         httpOnly: true,
         secure: true,
         maxAge: ONE_YEAR,

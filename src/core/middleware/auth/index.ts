@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 
+import { Cookies } from '../../constants';
 import { logger } from '../../logger';
 
 import { BadRequestError, UnauthorizedError } from '~/core/errors';
@@ -30,7 +31,7 @@ export const authMiddleware = async (
 
     logger.info(`[authMiddleware] Parsed Cookies: ${JSON.stringify(cookies)}`);
 
-    const accessToken: string | null = cookies['accessToken'] ?? null;
+    const accessToken: string | null = cookies[Cookies.accessToken] ?? null;
 
     if (!accessToken) {
       throw new UnauthorizedError(

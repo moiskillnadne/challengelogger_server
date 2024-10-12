@@ -128,12 +128,12 @@ route.post(
         ONE_DAY,
       );
 
-      const refreshToken = jwtService.generateToken(
-        {
-          email: validationResult.data.email,
-        },
-        ONE_MONTH,
-      );
+      // const refreshToken = jwtService.generateToken(
+      //   {
+      //     email: validationResult.data.email,
+      //   },
+      //   ONE_MONTH,
+      // );
 
       res.cookie('accessToken', accessToken, {
         httpOnly: true,
@@ -142,22 +142,22 @@ route.post(
         sameSite: 'none',
       });
 
-      res.cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        secure: true,
-        maxAge: ONE_MONTH,
-        sameSite: 'none',
-        path: '/auth/refresh-token',
-      });
+      // res.cookie('refreshToken', refreshToken, {
+      //   httpOnly: true,
+      //   secure: true,
+      //   maxAge: ONE_MONTH,
+      //   sameSite: 'none',
+      //   path: '/auth/refresh-token',
+      // });
 
       // Save refresh token to Redis (White list of refresh tokens)
-      await redis.set(
-        mapToRefreshTokenKey(validationResult.data.email),
-        refreshToken,
-        {
-          EX: ONE_MONTH,
-        },
-      );
+      // await redis.set(
+      //   mapToRefreshTokenKey(validationResult.data.email),
+      //   refreshToken,
+      //   {
+      //     EX: ONE_MONTH,
+      //   },
+      // );
 
       await redis.del(mapToOTPKey(validationResult.data.email));
 

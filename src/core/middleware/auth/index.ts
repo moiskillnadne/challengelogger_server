@@ -25,7 +25,7 @@ export const authMiddleware = async (
 
     logger.info(`[authMiddleware] Parsed Cookies: ${JSON.stringify(cookies)}`);
 
-    const accessToken = cookies['accessToken'] ?? null;
+    const accessToken: string | null = cookies['accessToken'] ?? null;
 
     if (!accessToken) {
       throw new UnauthorizedError(

@@ -31,7 +31,6 @@ export const httpLogger = (req: Request, res: Response, next: NextFunction) => {
     : '';
 
   logger.info(`[Request ${traceId}] ${method}: ${url} ${formattedBody}`);
-
   logger.info(`[Request ${traceId}] Cookies: ${JSON.stringify(cookies)}`);
 
   res.on('finish', () => {

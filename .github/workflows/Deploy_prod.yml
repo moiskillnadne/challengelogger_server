@@ -1,4 +1,4 @@
-name: Deploy
+name: Deploy Prod
 
 on:
   release:
@@ -19,7 +19,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: './*'
-          target: '/root/apps/challengelogger/server'
+          target: '/root/apps/challengelogger-prod/server'
 
       - name: Run command to restart the app
         uses: appleboy/ssh-action@v0.1.0
@@ -36,4 +36,4 @@ jobs:
             yarn install --frozen-lockfile
             yarn build
             yarn db:migrate
-            pm2 restart /root/apps/challengelogger/ecosystem.config.js
+            pm2 restart /root/apps/challengelogger-prod/ecosystem.config.js

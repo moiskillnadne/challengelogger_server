@@ -34,7 +34,8 @@ process.on('unhandledRejection', (reason: unknown) => {
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(helmet({ crossOriginResourcePolicy: false }));
+app.use(helmet());
+
 app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());
 

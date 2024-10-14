@@ -12,7 +12,10 @@ const env = {
   'process.env.AWS_REGION': JSON.stringify(process.env.AWS_REGION),
   'process.env.AWS_ACCESS_KEY_ID': JSON.stringify(process.env.AWS_ACCESS_KEY_ID),
   'process.env.AWS_SECRET_KEY': JSON.stringify(process.env.AWS_SECRET_KEY),
-  'process.env.LOGIN_OTP_TEMPLATE_ID': JSON.stringify(process.env.LOGIN_OTP_TEMPLATE_ID)
+  'process.env.LOGIN_OTP_TEMPLATE_ID': JSON.stringify(process.env.LOGIN_OTP_TEMPLATE_ID),
+  'process.env.REDIS_HOST': JSON.stringify(process.env.REDIS_HOST),
+  'process.env.REDIS_PORT': JSON.stringify(process.env.REDIS_PORT),
+  'process.env.REDIS_DB': JSON.stringify(process.env.REDIS_DB),
 };
 
 

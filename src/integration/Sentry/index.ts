@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/node';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
 
-const isDev = process.env.ENV === 'dev';
+const isLocal = process.env.ENV === 'local';
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
@@ -11,5 +11,5 @@ Sentry.init({
 
   // Set sampling rate for profiling - this is relative to tracesSampleRate
   profilesSampleRate: 1.0,
-  enabled: !isDev,
+  enabled: !isLocal,
 });

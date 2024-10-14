@@ -30,7 +30,7 @@ jobs:
           script: |
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            cd /root/apps/challengelogger/server
+            cd /root/apps/challengelogger-prod/server
             nvm install
             corepack enable
             yarn install --frozen-lockfile

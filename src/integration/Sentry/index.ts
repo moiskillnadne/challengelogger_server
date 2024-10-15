@@ -1,10 +1,12 @@
 import * as Sentry from '@sentry/node';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
 
-const isLocal = process.env.ENV === 'local';
+import { Env } from '~/core/constants';
+
+const isLocal = Env.APP_ENV === 'local';
 
 Sentry.init({
-  dsn: process.env.SENTRY_DSN,
+  dsn: Env.SENTRY_DSN,
   integrations: [nodeProfilingIntegration()],
   // Tracing
   tracesSampleRate: 1.0, //  Capture 100% of the transactions

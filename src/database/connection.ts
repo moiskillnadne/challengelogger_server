@@ -1,8 +1,10 @@
 import { Sequelize } from 'sequelize';
 
+import { Env } from '~/core/constants';
+
 export default new Sequelize({
   dialect: 'sqlite',
-  storage: process.env.SQLITE_DB_PATH || 'db.sqlite',
+  storage: Env.DB_PATH || 'db.sqlite',
   logging: false,
   benchmark: false,
   define: {

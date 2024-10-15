@@ -1,6 +1,7 @@
 import sendGridMail from '@sendgrid/mail';
 
-import { logger } from '../../core/logger';
+import { Env } from '~/core/constants';
+import { logger } from '~/core/logger';
 
 interface EmailBody {
   to: string;
@@ -19,7 +20,7 @@ export class SendGridService {
   private sender = 'no-reply@riabkov.com';
 
   constructor() {
-    sendGridMail.setApiKey(process.env.SENDGRID_API_KEY || '');
+    sendGridMail.setApiKey(Env.SENGRID_API_KEY || '');
   }
 
   public async sendEmail(body: EmailBody): Promise<void> {

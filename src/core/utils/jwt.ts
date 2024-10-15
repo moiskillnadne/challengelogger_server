@@ -3,24 +3,24 @@ import jwt from 'jsonwebtoken';
 import { BadRequestError } from '../errors';
 import { logger } from '../logger';
 
+interface GenerateTokenParams {
+  payload: Record<string, unknown>;
+  expiresIn: number;
+  secret: string;
+}
+
+interface VerifyTokenParams {
+  token: string;
+  secret: string;
+}
+
 class JWTService {
-  private secret: string;
+  constructor() {}
 
-  constructor() {
-    if (!process.env.JWT_SECRET_KEY) {
-      throw new Error('The JWT_SECRET_KEY variable not provided');
-    }
-
-    this.secret = process.env.JWT_SECRET_KEY;
-  }
-
-  public generateToken(
-    payload: Record<string, unknown>,
-    expiresIn: number,
-  ): string {
+  public generateToken(params: GenerateTokenParams): string {
     try {
-      return jwt.sign(payload, this.secret, {
-        expiresIn,
+      return jwt.sign(params.payload, params.secret, {
+        expiresIn: params.expiresIn,
       });
     } catch (error: unknown) {
       logger.error(`[JWTService.generateToken] ${error}`);
@@ -30,9 +30,9 @@ class JWTService {
     }
   }
 
-  public verifyToken(token: string) {
+  public verifyToken(params: VerifyTokenParams) {
     try {
-      return jwt.verify(token, this.secret);
+      return jwt.verify(params.token, params.secret);
     } catch (error: unknown) {
       logger.error(`[JWTService.verifyToken] ${error}`);
       throw new BadRequestError(

@@ -5,16 +5,16 @@ import cookieParser from 'cookie-parser';
 import express, { Request, Response } from 'express';
 import helmet from 'helmet';
 
-import { logger } from './core/logger';
-import { httpLogger } from './core/logger/middleware';
-import { authMiddleware } from './core/middleware/auth';
-import { exceptionsHandlerMiddleware } from './core/middleware/exceptions';
-
 import { redis } from './redis';
 
 import AuthRouter from '~/api/auth';
 import UserRoute from '~/api/user';
 import ChallengeRoute from '~/api/userChallenge/controller';
+import { Env } from '~/core/constants';
+import { logger } from '~/core/logger';
+import { httpLogger } from '~/core/logger/middleware';
+import { authMiddleware } from '~/core/middleware/auth';
+import { exceptionsHandlerMiddleware } from '~/core/middleware/exceptions';
 import { Sequelize } from '~/database';
 
 // Setup associations
@@ -32,7 +32,7 @@ process.on('unhandledRejection', (reason: unknown) => {
 });
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = Env.APP_PORT || 3000;
 
 app.use(helmet());
 

@@ -2,7 +2,7 @@ import express, { NextFunction, Request, Response } from 'express';
 
 import { ConfirmLoginBodySchema, LoginBodySchema } from './validation.schema';
 
-import { Cookies, ONE_DAY, ONE_YEAR } from '~/core/constants';
+import { Cookies, Env, ONE_MINUTE, ONE_MONTH } from '~/core/constants';
 import { ErrorMessages } from '~/core/dictionary/error.messages';
 import {
   BadRequestError,
@@ -121,43 +121,45 @@ route.post(
         throw new BadRequestError('Wrong code');
       }
 
-      const accessToken = jwtService.generateToken(
-        {
+      const accessToken = jwtService.generateToken({
+        secret: Env.JWT_ACCESS_SECRET ?? '',
+        expiresIn: ONE_MINUTE * 15,
+        payload: {
           email: validationResult.data.email,
         },
-        ONE_YEAR,
-      );
+      });
 
-      // const refreshToken = jwtService.generateToken(
-      //   {
-      //     email: validationResult.data.email,
-      //   },
-      //   ONE_MONTH,
-      // );
+      const refreshToken = jwtService.generateToken({
+        secret: Env.JWT_REFRESH_SECRET ?? '',
+        expiresIn: ONE_MONTH,
+        payload: {
+          email: validationResult.data.email,
+        },
+      });
 
       res.cookie(Cookies.accessToken, accessToken, {
         httpOnly: true,
         secure: true,
-        maxAge: ONE_YEAR,
-        sameSite: 'none',
+        maxAge: ONE_MINUTE * 15,
+        sameSite: 'strict',
       });
 
-      // res.cookie('refreshToken', refreshToken, {
-      //   httpOnly: true,
-      //   secure: true,
-      //   maxAge: ONE_MONTH,
-      //   sameSite: 'none',
-      //   path: '/auth/refresh-token',
-      // });
+      res.cookie(Cookies.refreshToken, refreshToken, {
+        httpOnly: true,
+        secure: true,
+        maxAge: ONE_MONTH,
+        sameSite: 'strict',
+        path: '/api/auth/refresh-token',
+      });
 
       // Save refresh token to Redis (White list of refresh tokens)
-      // await redis.set(
-      //   mapToRefreshTokenKey(validationResult.data.email),
-      //   refreshToken,
-      //   {
-      //     EX: ONE_MONTH,
-      //   },
-      // );
+      await redis.set(
+        mapToRefreshTokenKey(validationResult.data.email),
+        refreshToken,
+        {
+          EX: ONE_MONTH,
+        },
+      );
 
       await redis.del(mapToOTPKey(validationResult.data.email));
 
@@ -183,8 +185,8 @@ route.post(
       return next(new UnauthorizedError(ErrorMessages.unauthorized));
     }
 
-    res.clearCookie('accessToken');
-    res.clearCookie('refreshToken');
+    res.clearCookie(Cookies.accessToken);
+    res.clearCookie(Cookies.refreshToken);
 
     await redis.del(mapToRefreshTokenKey(user.email));
 
@@ -203,9 +205,12 @@ route.post(
     try {
       const cookies = req.cookies;
 
-      const refreshToken = cookies['refreshToken'] ?? null;
+      const refreshToken = cookies[Cookies.refreshToken] ?? null;
 
-      const decoded = jwtService.verifyToken(refreshToken);
+      const decoded = jwtService.verifyToken({
+        token: refreshToken,
+        secret: Env.JWT_REFRESH_SECRET ?? '',
+      });
 
       if (typeof decoded === 'string') {
         throw new UnprocessableEntityError(
@@ -227,18 +232,19 @@ route.post(
         throw new UnauthorizedError('Refresh token is expired');
       }
 
-      const accessToken = jwtService.generateToken(
-        {
+      const accessToken = jwtService.generateToken({
+        secret: Env.JWT_ACCESS_SECRET ?? '',
+        expiresIn: ONE_MINUTE * 15,
+        payload: {
           email: emailFromToken,
         },
-        ONE_DAY,
-      );
+      });
 
       res.cookie('accessToken', accessToken, {
         httpOnly: true,
         secure: true,
-        maxAge: ONE_DAY,
-        sameSite: 'none',
+        maxAge: ONE_MINUTE * 15,
+        sameSite: 'strict',
       });
 
       // TODO: Check the fingerprint of the device, if it's the same like "TRUST DEVICE" of user

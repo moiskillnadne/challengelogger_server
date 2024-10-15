@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 
-import { Cookies } from '../../constants';
+import { Cookies, Env } from '../../constants';
 import { logger } from '../../logger';
 
 import { BadRequestError, UnauthorizedError } from '~/core/errors';
@@ -39,7 +39,10 @@ export const authMiddleware = async (
       );
     }
 
-    const decoded = jwtService.verifyToken(accessToken);
+    const decoded = jwtService.verifyToken({
+      token: accessToken,
+      secret: Env.JWT_ACCESS_SECRET ?? '',
+    });
 
     logger.info(`[authMiddleware] Decoded JWT: ${JSON.stringify(decoded)}`);
 

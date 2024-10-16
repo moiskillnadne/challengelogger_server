@@ -213,15 +213,29 @@ route.post(
       });
 
       if (typeof decoded === 'string') {
-        throw new UnauthorizedError(
-          'Decoded refreshToken is string for some reason',
-        );
+        res.clearCookie(Cookies.accessToken);
+        res.clearCookie(Cookies.refreshToken);
+
+        return res.status(404).json({
+          type: 'TOKEN_EXPIRED',
+          statusCode: 404,
+          message: 'Token expired',
+          isError: true,
+        });
       }
 
       const emailFromToken: string | null = decoded['email'] ?? null;
 
       if (!emailFromToken) {
-        throw new UnauthorizedError('Email is undefined');
+        res.clearCookie(Cookies.accessToken);
+        res.clearCookie(Cookies.refreshToken);
+
+        return res.status(404).json({
+          type: 'TOKEN_EXPIRED',
+          statusCode: 404,
+          message: 'Token expired',
+          isError: true,
+        });
       }
 
       const refreshTokenFromRedis = await redis.get(
@@ -229,7 +243,15 @@ route.post(
       );
 
       if (!refreshTokenFromRedis) {
-        throw new UnauthorizedError('Refresh token is expired');
+        res.clearCookie(Cookies.accessToken);
+        res.clearCookie(Cookies.refreshToken);
+
+        return res.status(404).json({
+          type: 'TOKEN_EXPIRED',
+          statusCode: 404,
+          message: 'Token expired',
+          isError: true,
+        });
       }
 
       const accessToken = jwtService.generateToken({

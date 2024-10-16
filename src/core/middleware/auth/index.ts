@@ -3,7 +3,7 @@ import { NextFunction, Request, Response } from 'express';
 import { Cookies, Env } from '../../constants';
 import { logger } from '../../logger';
 
-import { BadRequestError, UnauthorizedError } from '~/core/errors';
+import { UnauthorizedError } from '~/core/errors';
 import { jwtService } from '~/core/utils';
 import { User } from '~/shared/user';
 import { UserCrudService } from '~/shared/user/User.crud';
@@ -47,7 +47,7 @@ export const authMiddleware = async (
     logger.info(`[authMiddleware] Decoded JWT: ${JSON.stringify(decoded)}`);
 
     if (typeof decoded === 'string') {
-      throw new BadRequestError(
+      throw new UnauthorizedError(
         `${middlewarePrefix} Decoded JWT is string for some reason. Decoded result is ${decoded}`,
       );
     }

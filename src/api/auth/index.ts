@@ -213,7 +213,7 @@ route.post(
       });
 
       if (typeof decoded === 'string') {
-        throw new UnprocessableEntityError(
+        throw new UnauthorizedError(
           'Decoded refreshToken is string for some reason',
         );
       }
@@ -221,7 +221,7 @@ route.post(
       const emailFromToken: string | null = decoded['email'] ?? null;
 
       if (!emailFromToken) {
-        throw new UnprocessableEntityError('Email is undefined');
+        throw new UnauthorizedError('Email is undefined');
       }
 
       const refreshTokenFromRedis = await redis.get(

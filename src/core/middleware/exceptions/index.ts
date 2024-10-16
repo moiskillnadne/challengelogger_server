@@ -1,6 +1,7 @@
 import * as Sentry from '@sentry/node';
 import { NextFunction, Request, Response } from 'express';
 
+import { Cookies } from '../../constants';
 import { logger } from '../../logger';
 
 import {
@@ -25,9 +26,19 @@ export const exceptionsHandlerMiddleware = (
 
   logger.error(`[Error ${traceId}] ${JSON.stringify(err)}`);
 
+  if (err instanceof UnauthorizedError) {
+    res.clearCookie(Cookies.accessToken);
+    res.clearCookie(Cookies.refreshToken);
+
+    return res.status(err.statusCode).json({
+      isError: true,
+      type: err.type,
+      message: err.message,
+    });
+  }
+
   const isAppCustomErrors =
     err instanceof BadRequestError ||
-    err instanceof UnauthorizedError ||
     err instanceof UnprocessableEntityError ||
     err instanceof NotFoundError;
 

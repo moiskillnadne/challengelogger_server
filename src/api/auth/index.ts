@@ -262,7 +262,7 @@ route.post(
         },
       });
 
-      res.cookie('accessToken', accessToken, {
+      res.cookie(Cookies.accessToken, accessToken, {
         httpOnly: true,
         secure: true,
         maxAge: ONE_MINUTE * 15,

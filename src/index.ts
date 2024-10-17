@@ -10,6 +10,7 @@ import { redis } from './redis';
 import AuthRouter from '~/api/auth';
 import UserRoute from '~/api/user';
 import ChallengeRoute from '~/api/userChallenge/controller';
+import WebAuthRouter from '~/api/webauth/controller';
 import { Env } from '~/core/constants';
 import { logger } from '~/core/logger';
 import { httpLogger } from '~/core/logger/middleware';
@@ -42,6 +43,8 @@ app.use(cookieParser());
 app.use(httpLogger);
 
 app.use('/api/auth', AuthRouter);
+
+app.use('/api/webauth', authMiddleware, WebAuthRouter);
 
 app.use('/api/protected/user', authMiddleware, UserRoute);
 

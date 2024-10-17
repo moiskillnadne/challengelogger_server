@@ -44,7 +44,7 @@ app.use(httpLogger);
 
 app.use('/api/auth', AuthRouter);
 
-app.use('/api/webauth', authMiddleware, WebAuthRouter);
+app.use('/api/webauth', WebAuthRouter);
 
 app.use('/api/protected/user', authMiddleware, UserRoute);
 

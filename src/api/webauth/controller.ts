@@ -2,10 +2,8 @@ import cbor from 'cbor';
 import crypto from 'crypto';
 import express, { NextFunction, Request, Response } from 'express';
 
-import { ErrorMessages } from '../../core/dictionary/error.messages';
-import { BadRequestError, UnauthorizedError } from '../../core/errors';
+import { BadRequestError } from '../../core/errors';
 import { logger } from '../../core/logger';
-import { isAuthenticated } from '../../shared/user';
 
 const route = express.Router();
 
@@ -56,45 +54,42 @@ function extractPublicKeyFromAuthData(authData: string) {
   return publicKeyBuffer;
 }
 
-route.post(
-  '/register',
-  async (req: Request, res: Response, next: NextFunction) => {
-    const user = req.user;
+route.post('/register', async (req: Request, res: Response) => {
+  const user = req.body.user;
 
-    if (!isAuthenticated(user)) {
-      return next(new UnauthorizedError(ErrorMessages.unauthorized));
-    }
+  if (!user) {
+    return res.status(400).json({ error: 'User not found' });
+  }
 
-    logger.info('Registering user:', user.email);
+  logger.info('Registering user:', user.email);
 
-    const challenge = generateChallenge();
+  const challenge = generateChallenge();
 
-    logger.info('Generated challenge:', challenge);
+  logger.info('Generated challenge:', challenge);
 
-    challengeStore[user.email] = challenge;
+  challengeStore[user.email] = challenge;
 
-    logger.info('Challenge store:', challengeStore);
+  logger.info('Challenge store:', challengeStore);
 
-    res.json({
-      challenge: Array.from(challenge),
-      rp: { name: 'ChallengeLogger' },
-      user: {
-        id: user.id,
-        name: user.email,
-        // displayName: email,
-      },
-      pubKeyCredParams: [{ alg: -7, type: 'public-key' }], // ES256 algorithm
-    });
-  },
-);
+  res.json({
+    challenge: Array.from(challenge),
+    rp: { name: 'ChallengeLogger' },
+    user: {
+      id: user.id,
+      name: user.email,
+      // displayName: email,
+    },
+    pubKeyCredParams: [{ alg: -7, type: 'public-key' }], // ES256 algorithm
+  });
+});
 
 route.post(
   '/verify',
   async (req: Request, res: Response, next: NextFunction) => {
-    const user = req.user;
+    const user = req.body.user;
 
-    if (!isAuthenticated(user)) {
-      return next(new UnauthorizedError(ErrorMessages.unauthorized));
+    if (!user) {
+      return res.status(400).json({ error: 'User not found' });
     }
 
     logger.info('Verifying user:', user.email);

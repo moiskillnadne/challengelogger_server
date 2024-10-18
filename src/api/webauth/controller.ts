@@ -79,15 +79,15 @@ route.post('/register', async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'User not found' });
   }
 
-  logger.info('Registering user:', user.email);
+  logger.info(`Registering user: ${user.email}`);
 
   const challenge = generateChallenge();
 
-  logger.info('Generated challenge:', challenge);
+  logger.info(`Generated challenge: ${challenge.toString('hex')}`);
 
   challengeStore[user.email] = challenge;
 
-  logger.info('Challenge store:', challengeStore);
+  logger.info(`Challenge store: ${JSON.stringify(challengeStore)}`);
 
   const params: ChallengeRegisterResponse = {
     challenge: Array.from(challenge),

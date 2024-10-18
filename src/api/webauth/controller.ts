@@ -15,11 +15,11 @@ interface ChallengeRegisterResponse {
 
 interface ChallengeVerifyBody {
   publicKey: {
-    id: 'some-credential-id';
-    rawId: [109, 98, 78, 45];
+    id: string;
+    rawId: number[];
     response: {
-      clientDataJSON: [101, 120, 97, 109, 112, 108, 101];
-      attestationObject: [120, 50, 101, 45, 76, 105];
+      clientDataJSON: number[];
+      attestationObject: number[];
     };
     type: 'public-key';
   };

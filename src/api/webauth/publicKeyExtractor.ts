@@ -50,6 +50,10 @@ function extractPublicKeyFromAuthData(authData: Buffer): Buffer {
     `[extractPublicKeyFromAuthData] Extracting public key from authData. AuthData length: ${authData.length}`,
   );
 
+  logger.info(
+    `[extractPublicKeyFromAuthData] AuthData ${JSON.stringify(authData)}`,
+  );
+
   if (authData.length < publicKeyStartIndex) {
     throw new Error('authData too short to extract public key');
   }

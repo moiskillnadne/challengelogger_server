@@ -58,7 +58,29 @@ function extractPublicKeyFromAuthData(authData: Buffer): Buffer {
     throw new Error('authData too short to extract public key');
   }
 
-  const publicKeyBuffer = authData.slice(publicKeyStartIndex);
+  const cosePublicKey = authData.slice(publicKeyStartIndex);
+
+  logger.info(
+    `[extractPublicKeyFromAuthData] Extracted COSE public key: ${JSON.stringify(cosePublicKey)}`,
+  );
+
+  const decodedCoseKey = cbor.decodeFirstSync(cosePublicKey);
+
+  logger.info(
+    `[extractPublicKeyFromAuthData] Decoded COSE public key: ${JSON.stringify(decodedCoseKey)}`,
+  );
+
+  const x = decodedCoseKey.get(-2); // Поле x
+  const y = decodedCoseKey.get(-3);
+
+  logger.info(
+    `[extractPublicKeyFromAuthData] Extracted x: ${JSON.stringify(x)}`,
+  );
+  logger.info(
+    `[extractPublicKeyFromAuthData] Extracted y: ${JSON.stringify(y)}`,
+  );
+
+  const publicKeyBuffer = Buffer.concat([Buffer.from([0x04]), x, y]);
 
   logger.info(
     `[extractPublicKeyFromAuthData] Extracted public key. Key length: ${publicKeyBuffer.length}. Key: ${publicKeyBuffer.toString('hex')}`,

@@ -109,12 +109,12 @@ route.post('/verify', async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'email not provided' });
   }
 
-  logger.info('Verifying user:', email);
-  logger.info('Public key:', publicKey);
+  logger.info(`Verifying user: ${email}`);
+  logger.info(`Public key: ${publicKey}`);
 
   userPublicKeyStore[email] = publicKey;
 
-  logger.info('User public key store:', userPublicKeyStore);
+  logger.info(`User public key store: ${JSON.stringify(userPublicKeyStore)}`);
 
   res.json({ success: true });
 });

@@ -128,13 +128,20 @@ route.post('/login-verify', async (req: Request, res: Response) => {
   const publicKey = await getUserPublicKey(userPublicKey);
 
   // Проверяем подпись с использованием публичного ключа
-  const isVerified = verifySignature(publicKey, signedData, signature);
+  let isVerified: boolean | undefined;
 
-  if (!isVerified) {
-    return res.status(401).json({ error: 'Invalid signature' });
+  try {
+    isVerified = verifySignature(publicKey, signedData, signature);
+
+    if (!isVerified) {
+      return res.status(401).json({ error: 'Invalid signature' });
+    }
+
+    res.json({ success: true });
+  } catch (error: unknown) {
+    logger.error(`Error verifying signature: ${error}`);
+    return res.status(500).json({ error: 'Error verifying signature' });
   }
-
-  res.json({ success: true });
 });
 
 export default route;

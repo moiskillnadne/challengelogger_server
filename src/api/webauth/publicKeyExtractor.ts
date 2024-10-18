@@ -68,8 +68,7 @@ function extractPublicKeyFromAuthData(authData: Buffer): Buffer {
 
   if (decodedCoseKey instanceof Map) {
     logger.info(
-      '[extractPublicKeyFromAuthData] COSE Key Map:',
-      Array.from(decodedCoseKey.entries()),
+      `[extractPublicKeyFromAuthData] COSE Key Map: ${JSON.stringify(Array.from(decodedCoseKey.entries()))}`,
     );
   }
 

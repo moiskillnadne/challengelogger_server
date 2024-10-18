@@ -66,12 +66,23 @@ function extractPublicKeyFromAuthData(authData: Buffer): Buffer {
 
   const decodedCoseKey = cbor.decodeFirstSync(cosePublicKey);
 
+  if (decodedCoseKey instanceof Map) {
+    logger.info(
+      '[extractPublicKeyFromAuthData] COSE Key Map:',
+      Array.from(decodedCoseKey.entries()),
+    );
+  }
+
   logger.info(
     `[extractPublicKeyFromAuthData] Decoded COSE public key: ${JSON.stringify(decodedCoseKey)}`,
   );
 
   const x = decodedCoseKey.get(-2); // Поле x
   const y = decodedCoseKey.get(-3);
+
+  if (!x || !y) {
+    throw new Error('Missing x or y in COSE key');
+  }
 
   logger.info(
     `[extractPublicKeyFromAuthData] Extracted x: ${JSON.stringify(x)}`,

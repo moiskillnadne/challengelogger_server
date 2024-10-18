@@ -1,3 +1,19 @@
+import type {
+  AuthenticatorTransportFuture,
+  CredentialDeviceType,
+  Base64URLString,
+} from '@simplewebauthn/types';
+
+export interface Passkey {
+  id: Base64URLString;
+  publicKey: Uint8Array;
+  webauthnUserID: Base64URLString;
+  counter: number;
+  deviceType: CredentialDeviceType;
+  backedUp: boolean;
+  transports?: AuthenticatorTransportFuture[];
+}
+
 export interface ChallengeRegisterResponse {
   challenge: number[];
   rp: { name: string };

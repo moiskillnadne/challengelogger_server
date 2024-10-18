@@ -1,16 +1,34 @@
 import cbor from 'cbor';
 import crypto from 'crypto';
-import express, { NextFunction, Request, Response } from 'express';
+import express, { Request, Response } from 'express';
 
-import { BadRequestError } from '../../core/errors';
 import { logger } from '../../core/logger';
 
 const route = express.Router();
 
+interface ChallengeRegisterResponse {
+  challenge: number[];
+  rp: { name: string };
+  user: { id: string; name: string };
+  pubKeyCredParams: { alg: number; type: string }[];
+}
+
+interface ChallengeVerifyBody {
+  publicKey: {
+    id: 'some-credential-id';
+    rawId: [109, 98, 78, 45];
+    response: {
+      clientDataJSON: [101, 120, 97, 109, 112, 108, 101];
+      attestationObject: [120, 50, 101, 45, 76, 105];
+    };
+    type: 'public-key';
+  };
+  email: string;
+}
+
 const challengeStore: Record<string, Buffer> = {};
 
-const userPublicKeyStore: Record<string, { publicKey: string; rawId: Buffer }> =
-  {};
+const userPublicKeyStore: Record<string, ChallengeVerifyBody['publicKey']> = {};
 
 function generateChallenge() {
   return crypto.randomBytes(32);
@@ -71,83 +89,34 @@ route.post('/register', async (req: Request, res: Response) => {
 
   logger.info('Challenge store:', challengeStore);
 
-  res.json({
+  const params: ChallengeRegisterResponse = {
     challenge: Array.from(challenge),
     rp: { name: 'ChallengeLogger' },
     user: {
       id: user.id,
       name: user.email,
-      // displayName: email,
     },
     pubKeyCredParams: [{ alg: -7, type: 'public-key' }], // ES256 algorithm
-  });
+  };
+
+  res.json(params);
 });
 
-route.post(
-  '/verify',
-  async (req: Request, res: Response, next: NextFunction) => {
-    const user = req.body.user;
+route.post('/verify', async (req: Request, res: Response) => {
+  const { email, publicKey } = req.body as ChallengeVerifyBody;
 
-    if (!user) {
-      return res.status(400).json({ error: 'User not found' });
-    }
+  if (!email) {
+    return res.status(400).json({ error: 'email not provided' });
+  }
 
-    logger.info('Verifying user:', user.email);
+  logger.info('Verifying user:', email);
+  logger.info('Public key:', publicKey);
 
-    const { rawId, response } = req.body;
+  userPublicKeyStore[email] = publicKey;
 
-    logger.info('Raw ID:', rawId);
-    logger.info('Response:', response);
+  logger.info('User public key store:', userPublicKeyStore);
 
-    try {
-      // Шаг 1: Извлечь сохраненный challenge для пользователя
-      const storedChallenge = challengeStore[user.email];
-      if (!storedChallenge) {
-        return next(new BadRequestError('Challenge not found'));
-      }
-
-      // Шаг 2: Проверить, что challenge совпадает с тем, что был подписан клиентом
-      const clientDataJSON = Buffer.from(response.clientDataJSON, 'base64');
-      const clientData = JSON.parse(clientDataJSON.toString());
-
-      logger.info('Client data:', clientData);
-
-      logger.info('Stored challenge:', storedChallenge);
-
-      if (
-        Buffer.from(clientData.challenge, 'base64').toString() !==
-        storedChallenge.toString('base64')
-      ) {
-        return next(new BadRequestError('Invalid challenge'));
-      }
-
-      // Шаг 3: Извлечь публичный ключ из attestationObject
-      const attestationObject = Buffer.from(
-        response.attestationObject,
-        'base64',
-      );
-      const publicKey = await extractPublicKey(attestationObject);
-
-      // Шаг 4: Сохранить публичный ключ в userPublicKeyStore
-      userPublicKeyStore[user.email] = {
-        publicKey: publicKey,
-        rawId: Buffer.from(rawId, 'base64'), // Сохраняем rawId
-      };
-
-      logger.info('User public key store:', userPublicKeyStore);
-
-      // Шаг 5: Удалить challenge после успешной верификации
-      delete challengeStore[user.email];
-
-      logger.info('Challenge store after verification:', challengeStore);
-
-      // Возвращаем успешный ответ
-      res.status(200).json({ success: true });
-    } catch (error) {
-      console.error('Verification error:', error);
-      return next(new BadRequestError('Verification failed'));
-    }
-  },
-);
+  res.json({ success: true });
+});
 
 export default route;

@@ -131,6 +131,11 @@ route.post('/login-verify', async (req: Request, res: Response) => {
   let isVerified: boolean | undefined;
 
   try {
+    logger.info(`Verifying signature for user: ${email}`);
+    logger.info(`Public key: ${publicKey.toString('hex')}`);
+    logger.info(`Signed data: ${signedData.toString('hex')}`);
+    logger.info(`Signature: ${signature.toString('hex')}`);
+
     isVerified = verifySignature(publicKey, signedData, signature);
 
     if (!isVerified) {

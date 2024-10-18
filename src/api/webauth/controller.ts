@@ -1,76 +1,20 @@
-import cbor from 'cbor';
-import crypto from 'crypto';
 import express, { Request, Response } from 'express';
 
-import { logger } from '../../core/logger';
+import { generateChallenge } from './generateChallenge';
+import { getUserPublicKey } from './publicKeyExtractor';
+import { challengeStore, userPublicKeyStore } from './tmp-store';
+import {
+  AuthChallengeResponse,
+  AuthVerifyRequest,
+  ChallengeRegisterResponse,
+  ChallengeVerifyBody,
+} from './types';
+import { verifySignature } from './verifySignature';
+import { numberArrayToBase64 } from '../../core/utils';
+
+import { logger } from '~/core/logger';
 
 const route = express.Router();
-
-interface ChallengeRegisterResponse {
-  challenge: number[];
-  rp: { name: string };
-  user: { id: string; name: string };
-  pubKeyCredParams: { alg: number; type: string }[];
-}
-
-interface ChallengeVerifyBody {
-  publicKey: {
-    id: string;
-    rawId: number[];
-    response: {
-      clientDataJSON: number[];
-      attestationObject: number[];
-    };
-    type: 'public-key';
-  };
-  email: string;
-}
-
-const challengeStore: Record<string, Buffer> = {};
-
-const userPublicKeyStore: Record<string, ChallengeVerifyBody['publicKey']> = {};
-
-function generateChallenge() {
-  return crypto.randomBytes(32);
-}
-
-async function extractPublicKey(attestationObject: Buffer) {
-  logger.info('Extracting public key from attestation object');
-
-  logger.info('Attestation object:', attestationObject);
-
-  try {
-    // Декодируем объект attestationObject с помощью CBOR
-    const decodedAttestation = await cbor.decodeFirst(attestationObject);
-
-    logger.info('Decoded Attestation object:', decodedAttestation);
-
-    // Проверяем, что внутри есть необходимое поле 'authData'
-    const authData = decodedAttestation.authData;
-
-    logger.info('Auth data:', authData);
-
-    // authData — это бинарный массив данных, из которого мы можем извлечь публичный ключ
-    const publicKey = extractPublicKeyFromAuthData(authData);
-
-    logger.info('Extracted public key:', publicKey);
-
-    return publicKey;
-  } catch (error) {
-    console.error('Error extracting public key:', error);
-    throw new Error('Failed to extract public key');
-  }
-}
-
-// Функция для извлечения публичного ключа из authData
-function extractPublicKeyFromAuthData(authData: string) {
-  // Длина authData фиксирована: 37 байт
-  // Публичный ключ начинается после первых 37 байтов данных
-  const publicKeyStartIndex = 37;
-  const publicKeyBuffer = authData.slice(publicKeyStartIndex);
-
-  return publicKeyBuffer;
-}
 
 route.post('/register', async (req: Request, res: Response) => {
   const user = req.body.user;
@@ -93,7 +37,7 @@ route.post('/register', async (req: Request, res: Response) => {
     challenge: Array.from(challenge),
     rp: { name: 'ChallengeLogger' },
     user: {
-      id: user.id,
+      id: user.email,
       name: user.email,
     },
     pubKeyCredParams: [{ alg: -7, type: 'public-key' }], // ES256 algorithm
@@ -115,6 +59,80 @@ route.post('/verify', async (req: Request, res: Response) => {
   userPublicKeyStore[email] = publicKey;
 
   logger.info(`User public key store: ${JSON.stringify(userPublicKeyStore)}`);
+
+  res.json({ success: true });
+});
+
+route.post('/login-challenge', async (req: Request, res: Response) => {
+  const email = req.body.email;
+
+  if (!email) {
+    return res.status(400).json({ error: 'email not provided' });
+  }
+
+  logger.info(`Logging in user: ${email}`);
+
+  const challenge = generateChallenge();
+
+  logger.info(`Generated challenge: ${challenge.toString('hex')}`);
+
+  challengeStore[email] = challenge;
+
+  logger.info(`Challenge store: ${JSON.stringify(challengeStore)}`);
+
+  const challengeParams: AuthChallengeResponse = {
+    challenge: Array.from(challenge),
+    rp: { name: 'ChallengeLogger' },
+    user: {
+      id: email,
+      name: email,
+    },
+    allowCredentials: [
+      {
+        type: 'public-key',
+        id: numberArrayToBase64(userPublicKeyStore[email].rawId),
+      },
+    ],
+  };
+
+  res.json(challengeParams);
+});
+
+route.post('/login-verify', async (req: Request, res: Response) => {
+  const { email, response } = req.body as AuthVerifyRequest;
+
+  if (!email) {
+    return res.status(400).json({ error: 'Email not provided' });
+  }
+
+  const userPublicKey = userPublicKeyStore[email];
+
+  if (!userPublicKey) {
+    return res
+      .status(400)
+      .json({ error: 'User not found or public key missing' });
+  }
+
+  const storedChallenge = challengeStore[email];
+
+  if (!storedChallenge) {
+    return res.status(400).json({ error: 'Challenge not found' });
+  }
+
+  const clientDataJSON = Buffer.from(response.clientDataJSON, 'base64');
+  const authenticatorData = Buffer.from(response.authenticatorData, 'base64');
+  const signature = Buffer.from(response.signature, 'base64');
+
+  const signedData = Buffer.concat([authenticatorData, clientDataJSON]);
+
+  const publicKey = await getUserPublicKey(userPublicKey);
+
+  // Проверяем подпись с использованием публичного ключа
+  const isVerified = verifySignature(publicKey, signedData, signature);
+
+  if (!isVerified) {
+    return res.status(401).json({ error: 'Invalid signature' });
+  }
 
   res.json({ success: true });
 });

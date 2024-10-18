@@ -1,6 +1,7 @@
 import { User } from './User';
 import { UserChallenge } from './UserChallenge';
 import { UserChallengeProgress } from './UserChallengeProgress';
+import { UserCredential } from './UserCredential';
 import { UserDevice } from './UserDevice';
 
 // User model
@@ -30,6 +31,17 @@ User.hasMany(UserDevice, {
 });
 
 UserDevice.belongsTo(User, {
+  foreignKey: 'userId',
+  as: 'user',
+});
+
+// UserCredential model
+User.hasMany(UserCredential, {
+  foreignKey: 'userId',
+  as: 'credentials',
+});
+
+UserCredential.belongsTo(User, {
   foreignKey: 'userId',
   as: 'user',
 });

@@ -15,6 +15,7 @@ import { redis } from '../../redis';
 import { mapToChallengeKey } from '../../redis/mappers';
 import { UserCredentialCrudService } from '../../shared/UserCredential';
 
+import { origin } from '~/core/constants';
 import { ErrorMessages } from '~/core/dictionary/error.messages';
 import { UnauthorizedError } from '~/core/errors';
 import { logger } from '~/core/logger';

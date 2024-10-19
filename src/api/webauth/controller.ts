@@ -8,12 +8,7 @@ import express, { NextFunction, Request, Response } from 'express';
 import { generateChallenge } from './generateChallenge';
 import { getUserPublicKey } from './publicKeyExtractor';
 import { challengeStore, userPublicKeyStore } from './tmp-store';
-import {
-  AuthChallengeResponse,
-  AuthVerifyRequest,
-  ChallengeVerifyBody,
-  Passkey,
-} from './types';
+import { AuthChallengeResponse, AuthVerifyRequest, Passkey } from './types';
 import { verifySignature } from './verifySignature';
 import { rpID, rpName } from '../../core/constants';
 import { redis } from '../../redis';
@@ -92,6 +87,12 @@ route.post(
     }
 
     try {
+      logger.info(`Body: ${JSON.stringify(req.body)}`);
+
+      logger.info(`Challenge: ${JSON.stringify(userChallengeOptions)}`);
+
+      logger.info(`Expected origin: ${origin}`);
+
       const verification = await verifyRegistrationResponse({
         response: req.body,
         expectedChallenge: userChallengeOptions.challenge,
@@ -106,7 +107,7 @@ route.post(
       }
     } catch (error: unknown) {
       logger.error(`Error verifying registration: ${error}`);
-      return next(error);
+      return res.status(404).json({ isSuccess: false, error });
     }
   },
 );

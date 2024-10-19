@@ -105,6 +105,28 @@ route.post(
       if (verification.verified) {
         const { registrationInfo } = verification;
 
+        // Save into DB
+        logger.info(
+          `Registration verified for user: ${user.email}. Saving into DB`,
+        );
+
+        if (!registrationInfo) {
+          return res
+            .status(400)
+            .json({ error: 'Registration info not provided' });
+        }
+
+        await UserCredentialCrudService.saveCredential({
+          userId: user.id,
+          webauthnUserID: userChallengeOptions.user.id,
+          credId: registrationInfo.credential.id,
+          publicKey: registrationInfo.credential.publicKey,
+          deviceType: registrationInfo.credentialDeviceType,
+          backedUp: registrationInfo.credentialBackedUp,
+          counter: registrationInfo.credential.counter,
+          transports: registrationInfo.credential.transports,
+        });
+
         return res.status(200).json({ success: true, data: registrationInfo });
       }
     } catch (error: unknown) {

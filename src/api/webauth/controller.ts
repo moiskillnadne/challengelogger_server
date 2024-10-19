@@ -99,6 +99,7 @@ route.post(
         expectedChallenge: userChallengeOptions.challenge,
         expectedOrigin: origin,
         expectedRPID: rpID,
+        requireUserVerification: false,
       });
 
       if (verification.verified) {

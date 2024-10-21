@@ -166,7 +166,6 @@ route.post(
           id: passkey.credId,
           transports: passkey.transports,
         })),
-        userVerification: 'discouraged',
       });
 
       await redis.set(mapToChallengeKey(email), JSON.stringify(options));

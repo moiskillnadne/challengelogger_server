@@ -13,6 +13,11 @@ interface CreateCredentialPayload {
   userId: string;
 }
 
+interface UpdateCredentialCounterPayload {
+  credId: string;
+  counter: number;
+}
+
 export class UserCredentialCrudService {
   static async getCredentialByUserId(
     userId: string,
@@ -31,5 +36,14 @@ export class UserCredentialCrudService {
       transports: payload.transports,
       userId: payload.userId,
     });
+  }
+
+  static async updateCredentialCounter(
+    payload: UpdateCredentialCounterPayload,
+  ) {
+    return UserCredential.update(
+      { counter: payload.counter },
+      { where: { credId: payload.credId } },
+    );
   }
 }

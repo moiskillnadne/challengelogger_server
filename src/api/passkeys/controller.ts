@@ -235,6 +235,15 @@ route.post(
       });
 
       if (verification.verified) {
+        await redis.del(mapToChallengeKey(email));
+
+        const updatedCounter = verification.authenticationInfo.newCounter;
+
+        await UserCredentialCrudService.updateCredentialCounter({
+          credId: passkey.credId,
+          counter: updatedCounter,
+        });
+
         return res.status(200).json({ success: true });
       }
 

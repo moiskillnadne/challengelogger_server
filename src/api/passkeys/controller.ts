@@ -194,6 +194,8 @@ route.post(
 
     const user = await UserCrudService.getUserByEmailWithCredentials(email);
 
+    logger.info(`User found: ${user?.dataValues.email}`);
+
     if (!user) {
       return next(new UnauthorizedError(ErrorMessages.unauthorized));
     }
@@ -203,6 +205,8 @@ route.post(
       .then<PublicKeyCredentialCreationOptionsJSON | null>((data) =>
         data ? JSON.parse(data) : null,
       );
+
+    logger.info(`Challenge options: ${JSON.stringify(userChallengeOptions)}`);
 
     if (!userChallengeOptions) {
       return next(new BadRequestError('Challenge not found'));
@@ -221,7 +225,7 @@ route.post(
     }
 
     try {
-      const verification = await verifyAuthenticationResponse({
+      const verifyChallengeOptions = {
         response: challengeResponse,
         expectedChallenge: userChallengeOptions.challenge,
         expectedOrigin: origin,
@@ -232,7 +236,17 @@ route.post(
           counter: passkey.counter,
           transports: passkey.transports,
         },
-      });
+      };
+
+      logger.info(
+        `Verify challenge options: ${JSON.stringify(verifyChallengeOptions)}`,
+      );
+
+      const verification = await verifyAuthenticationResponse(
+        verifyChallengeOptions,
+      );
+
+      logger.info(`Verification result: ${JSON.stringify(verification)}`);
 
       if (verification.verified) {
         await redis.del(mapToChallengeKey(email));

@@ -50,7 +50,7 @@ route.post(
       userName: user.email,
       attestationType: 'none',
       excludeCredentials: credentials.map((passkey) => ({
-        id: passkey.id,
+        id: passkey.credId,
         transports: passkey.transports,
       })),
       authenticatorSelection: {
@@ -162,10 +162,11 @@ route.post(
 
       const options = await generateAuthenticationOptions({
         rpID,
-        allowCredentials: userCredentials.map((passkey) => ({
-          id: passkey.id,
+        allowCredentials: userCredentials.map((passkey: Passkey) => ({
+          id: passkey.credId,
           transports: passkey.transports,
         })),
+        userVerification: 'discouraged',
       });
 
       await redis.set(mapToChallengeKey(email), JSON.stringify(options));
@@ -212,7 +213,7 @@ route.post(
     ) ?? []) as unknown as Array<Passkey>;
 
     const passkey = userCredentials.find(
-      (passkey) => passkey.id === challengeResponse.id,
+      (passkey) => passkey.credId === challengeResponse.id,
     );
 
     if (!passkey) {
@@ -226,7 +227,7 @@ route.post(
         expectedOrigin: origin,
         expectedRPID: rpID,
         credential: {
-          id: passkey.id,
+          id: passkey.credId,
           publicKey: passkey.publicKey,
           counter: passkey.counter,
           transports: passkey.transports,

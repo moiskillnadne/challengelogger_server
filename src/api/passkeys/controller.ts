@@ -2,6 +2,7 @@ import {
   generateAuthenticationOptions,
   generateRegistrationOptions,
   verifyAuthenticationResponse,
+  VerifyAuthenticationResponseOpts,
   verifyRegistrationResponse,
 } from '@simplewebauthn/server';
 import { PublicKeyCredentialCreationOptionsJSON } from '@simplewebauthn/server/script/deps';
@@ -168,7 +169,11 @@ route.post(
         })),
       });
 
-      await redis.set(mapToChallengeKey(email), JSON.stringify(options));
+      const optionsJSON = JSON.stringify(options);
+
+      logger.info(`Authentication challenge options: ${optionsJSON}`);
+
+      await redis.set(mapToChallengeKey(email), optionsJSON);
 
       res.status(200).json({ success: true, data: options });
     } catch (error: unknown) {
@@ -226,7 +231,7 @@ route.post(
     logger.info(`Found passkey: ${JSON.stringify(passkey)}`);
 
     try {
-      const verifyChallengeOptions = {
+      const verifyChallengeOptions: VerifyAuthenticationResponseOpts = {
         response: challengeResponse,
         expectedChallenge: userChallengeOptions.challenge,
         expectedOrigin: origin,

@@ -1,6 +1,7 @@
 import { Model } from 'sequelize';
 
 import { CreateUserSchemaType } from './schema';
+import { UserCredential } from '../../database/models/UserCredential';
 
 import { User } from '~/database/models/User';
 
@@ -25,5 +26,17 @@ export class UserCrudService {
       user,
       isCreated,
     ]);
+  }
+
+  static async getUserByEmailWithCredentials(email: string) {
+    return User.findOne({
+      where: { email },
+      include: [
+        {
+          model: UserCredential,
+          as: 'credentials',
+        },
+      ],
+    });
   }
 }

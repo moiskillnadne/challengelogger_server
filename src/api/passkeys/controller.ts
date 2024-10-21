@@ -9,7 +9,7 @@ import { PublicKeyCredentialCreationOptionsJSON } from '@simplewebauthn/server/s
 import express, { NextFunction, Request, Response } from 'express';
 
 import { Passkey } from './types';
-import { rpID, rpName } from '../../core/constants';
+import { ONE_MINUTE, rpID, rpName } from '../../core/constants';
 import { redis } from '../../redis';
 import { mapToChallengeKey } from '../../redis/mappers';
 import { UserCredentialCrudService } from '../../shared/UserCredential';
@@ -173,7 +173,9 @@ route.post(
 
       logger.info(`Authentication challenge options: ${optionsJSON}`);
 
-      await redis.set(mapToChallengeKey(email), optionsJSON);
+      await redis.set(mapToChallengeKey(email), optionsJSON, {
+        EX: ONE_MINUTE * 15,
+      });
 
       res.status(200).json({ success: true, data: options });
     } catch (error: unknown) {
@@ -210,7 +212,9 @@ route.post(
         data ? JSON.parse(data) : null,
       );
 
-    logger.info(`Challenge options: ${JSON.stringify(userChallengeOptions)}`);
+    logger.info(
+      `Challenge from redis: ${JSON.stringify(userChallengeOptions)}`,
+    );
 
     if (!userChallengeOptions) {
       return next(new BadRequestError('Challenge not found'));

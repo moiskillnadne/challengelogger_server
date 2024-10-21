@@ -223,6 +223,8 @@ route.post(
       return next(new BadRequestError('Passkey not found'));
     }
 
+    logger.info(`Found passkey: ${JSON.stringify(passkey)}`);
+
     try {
       const verifyChallengeOptions = {
         response: challengeResponse,

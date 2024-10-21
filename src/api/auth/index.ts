@@ -1,6 +1,7 @@
 import express, { NextFunction, Request, Response } from 'express';
 
 import { ConfirmLoginBodySchema, LoginBodySchema } from './validation.schema';
+import { logger } from '../../core/logger';
 
 import { Cookies, Env, ONE_MINUTE, ONE_MONTH } from '~/core/constants';
 import { ErrorMessages } from '~/core/dictionary/error.messages';
@@ -207,10 +208,18 @@ route.post(
 
       const refreshToken = cookies[Cookies.refreshToken] ?? null;
 
+      logger.info(
+        `[/api/auth/refresh-token] Refresh token from cookies: ${JSON.stringify(refreshToken)}`,
+      );
+
       const decoded = jwtService.verifyToken({
         token: refreshToken,
         secret: Env.JWT_REFRESH_SECRET ?? '',
       });
+
+      logger.info(
+        `[/api/auth/refresh-token] Decoded refresh: ${JSON.stringify(decoded)}`,
+      );
 
       if (typeof decoded === 'string') {
         res.clearCookie(Cookies.accessToken);
@@ -219,7 +228,8 @@ route.post(
         return res.status(404).json({
           type: 'TOKEN_EXPIRED',
           statusCode: 404,
-          message: 'Token expired',
+          message:
+            'Token expired. Decoded refresh token is string for some reasons.',
           isError: true,
         });
       }
@@ -233,7 +243,8 @@ route.post(
         return res.status(404).json({
           type: 'TOKEN_EXPIRED',
           statusCode: 404,
-          message: 'Token expired',
+          message:
+            'Token expired. Decoded refresh doesn`t have required properies',
           isError: true,
         });
       }

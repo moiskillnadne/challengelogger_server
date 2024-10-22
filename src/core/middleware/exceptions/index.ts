@@ -34,6 +34,7 @@ export const exceptionsHandlerMiddleware = (
   if (isAppCustomErrors) {
     return res.status(err.statusCode).json({
       isError: true,
+      isOperational: err.isOperational,
       type: err.type,
       message: err.message,
     });
@@ -43,6 +44,7 @@ export const exceptionsHandlerMiddleware = (
     if (err.name === SEQUELIZE_UNIQUE_CONSTRAINT_ERROR) {
       return res.status(409).json({
         isError: true,
+        isOperational: false,
         type: 'UNIQUE_CONSTRAINT_ERROR',
         message: 'Unique constraint error',
       });
@@ -51,7 +53,10 @@ export const exceptionsHandlerMiddleware = (
 
   return res.status(500).json({
     isError: true,
+    isOperational: false,
     type: 'SERVER_INTERNAL_ERROR',
     message: 'Internal Server Error',
+
+    error: err,
   });
 };

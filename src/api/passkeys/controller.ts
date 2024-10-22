@@ -246,7 +246,7 @@ route.post(
           counter: passkey.counter,
           transports: passkey.transports,
         },
-        // requireUserVerification: false,
+        requireUserVerification: false,
       };
 
       logger.info(

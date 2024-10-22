@@ -246,6 +246,9 @@ route.post(
           counter: passkey.counter,
           transports: passkey.transports,
         },
+        advancedFIDOConfig: {
+          userVerification: 'discouraged',
+        },
       };
 
       logger.info(

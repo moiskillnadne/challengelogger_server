@@ -236,6 +236,10 @@ route.post(
 
       const emailFromToken: string | null = decoded['email'] ?? null;
 
+      logger.info(
+        `[/api/auth/refresh-token] Email from refreshToken: ${emailFromToken}`,
+      );
+
       if (!emailFromToken) {
         res.clearCookie(Cookies.accessToken);
         res.clearCookie(Cookies.refreshToken);
@@ -252,6 +256,8 @@ route.post(
       const refreshTokenFromRedis = await redis.get(
         mapToRefreshTokenKey(emailFromToken),
       );
+
+      logger.info(`Refresh token from Redis: ${refreshTokenFromRedis}`);
 
       if (!refreshTokenFromRedis) {
         res.clearCookie(Cookies.accessToken);

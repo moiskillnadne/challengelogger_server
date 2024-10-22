@@ -273,7 +273,6 @@ route.post(
 
       return res.status(401).json({ success: false });
     } catch (error: unknown) {
-      logger.error(`Error verifying login: ${JSON.stringify(error)}`);
       return next(error);
     }
   },

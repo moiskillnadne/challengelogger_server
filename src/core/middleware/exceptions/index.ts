@@ -23,7 +23,7 @@ export const exceptionsHandlerMiddleware = (
 
   Sentry.captureException(err);
 
-  logger.error(`[Error ${traceId}] ${JSON.stringify(err)}`);
+  logger.error(`[Error ${traceId}] ${err}`);
 
   const isAppCustomErrors =
     err instanceof BadRequestError ||

@@ -1,4 +1,4 @@
 export const Cookies = {
-  accessToken: 'authToken',
+  accessToken: 'accessToken',
   refreshToken: 'refreshToken',
 };

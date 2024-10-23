@@ -11,7 +11,7 @@ import {
   UnprocessableEntityError,
 } from '~/core/errors/';
 import { authMiddleware } from '~/core/middleware/auth';
-import { generateOTP } from '~/core/utils';
+import { generateOTP, isProduction } from '~/core/utils';
 import { jwtService } from '~/core/utils';
 import { SendGridService } from '~/integration/SendGrid';
 import { redis } from '~/redis';
@@ -140,16 +140,16 @@ route.post(
 
       res.cookie(Cookies.accessToken, accessToken, {
         httpOnly: true,
-        secure: true,
+        secure: isProduction,
         maxAge: ONE_MINUTE * 15,
-        sameSite: 'strict',
+        sameSite: isProduction ? 'strict' : 'lax',
       });
 
       res.cookie(Cookies.refreshToken, refreshToken, {
         httpOnly: true,
-        secure: true,
+        secure: isProduction,
         maxAge: ONE_MONTH,
-        sameSite: 'strict',
+        sameSite: isProduction ? 'strict' : 'lax',
         path: '/api/auth/refresh-token',
       });
 

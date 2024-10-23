@@ -1,9 +1,10 @@
 import { NextFunction, Request, Response } from 'express';
 
-import { Cookies, Env } from '../../constants';
-import { logger } from '../../logger';
+import { SpecificErrorTypes } from '../../dictionary/error.types';
 
+import { Cookies, Env } from '~/core/constants';
 import { UnauthorizedError } from '~/core/errors';
+import { logger } from '~/core/logger';
 import { jwtService } from '~/core/utils';
 import { User } from '~/shared/user';
 import { UserCrudService } from '~/shared/user/User.crud';
@@ -13,66 +14,65 @@ export const authMiddleware = async (
   res: Response,
   next: NextFunction,
 ) => {
-  const middlewarePrefix: string = 'Authentication required:';
-
-  const url = req.url;
-  const method = req.method;
-
-  logger.info(
-    `[authMiddleware] Request URL: ${method} ${url} start auth validation`,
-  );
+  const middlewarePrefix: string = `[${req.traceId ?? 'N/A'}] AuthGuard:`;
 
   try {
     const cookies = req.cookies;
 
     if (!cookies) {
-      throw new UnauthorizedError(`${middlewarePrefix} Cookies undefined`);
+      throw new UnauthorizedError(
+        `${middlewarePrefix} Cookies undefined. Cookies: ${JSON.stringify(cookies)}`,
+        SpecificErrorTypes.Unauthorized.CookiesUndefined,
+      );
     }
-
-    logger.info(`[authMiddleware] Parsed Cookies: ${JSON.stringify(cookies)}`);
 
     const accessToken: string | null = cookies[Cookies.accessToken] ?? null;
 
     if (!accessToken) {
       throw new UnauthorizedError(
-        `${middlewarePrefix} Auth token is undefined`,
+        `${middlewarePrefix} ${Cookies.accessToken} is undefined. Cookies: ${JSON.stringify(cookies)}`,
+        SpecificErrorTypes.Unauthorized.AccessTokenUndefined,
       );
     }
 
-    const decoded = jwtService.verifyToken({
+    const tokenData = jwtService.verifyToken({
       token: accessToken,
       secret: Env.JWT_ACCESS_SECRET ?? '',
     });
 
-    logger.info(`[authMiddleware] Decoded JWT: ${JSON.stringify(decoded)}`);
+    logger.info(
+      `${middlewarePrefix} Decoded JWT: ${JSON.stringify(tokenData)}`,
+    );
 
-    if (typeof decoded === 'string') {
+    if (typeof tokenData === 'string') {
       throw new UnauthorizedError(
-        `${middlewarePrefix} Decoded JWT is string for some reason. Decoded result is ${decoded}`,
+        `${middlewarePrefix} Decoded JWT is string for some reason. Decoded result is ${tokenData}`,
+        SpecificErrorTypes.Unauthorized.TokenUnprocessable,
       );
     }
 
-    const emailFromToken: string | null = decoded['email'] ?? null;
+    const emailFromToken: string | null = tokenData['email'] ?? null;
 
     if (!emailFromToken) {
-      throw new UnauthorizedError(`${middlewarePrefix} Email is undefined`);
+      throw new UnauthorizedError(
+        `${middlewarePrefix} Email is undefined.`,
+        SpecificErrorTypes.Unauthorized.UserNotFound,
+      );
     }
-
-    logger.info(`[authMiddleware] Email from token: ${emailFromToken}`);
 
     const user = await UserCrudService.getUserByEmail(emailFromToken);
 
     if (!user) {
-      throw new UnauthorizedError(`${middlewarePrefix} User not found`);
+      throw new UnauthorizedError(
+        `${middlewarePrefix} User not found`,
+        SpecificErrorTypes.Unauthorized.UserNotFound,
+      );
     }
-
-    logger.info(`[authMiddleware] User found: ${JSON.stringify(user)}`);
 
     req.user = user?.toJSON() as unknown as User;
 
     next();
   } catch (err: unknown) {
-    logger.error(`[authMiddleware] Error: ${err}`);
     return next(err);
   }
 };

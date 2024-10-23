@@ -34,7 +34,9 @@ class JWTService {
     try {
       return jwt.verify(params.token, params.secret);
     } catch (error: unknown) {
-      logger.error(`[JWTService.verifyToken] ${error}`);
+      logger.error(
+        `[JWTService.verifyToken] Error: ${error}. Params: ${params}`,
+      );
       throw new BadRequestError(
         '[JWTService.verifyToken] Invalid token. Can`t verify token',
       );

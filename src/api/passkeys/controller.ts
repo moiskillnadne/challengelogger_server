@@ -1,31 +1,34 @@
 import {
   generateAuthenticationOptions,
   generateRegistrationOptions,
+  GenerateRegistrationOptionsOpts,
   verifyAuthenticationResponse,
   VerifyAuthenticationResponseOpts,
   verifyRegistrationResponse,
+  VerifyRegistrationResponseOpts,
 } from '@simplewebauthn/server';
 import { PublicKeyCredentialCreationOptionsJSON } from '@simplewebauthn/server/script/deps';
 import express, { NextFunction, Request, Response } from 'express';
 
 import { Passkey } from './types';
-import { ONE_MINUTE, rpID, rpName } from '../../core/constants';
 import { redis } from '../../redis';
 import { mapToChallengeKey } from '../../redis/mappers';
-import { UserCredentialCrudService } from '../../shared/UserCredential';
 import { LoginBodySchema } from '../auth/validation.schema';
 
+import { ONE_MINUTE, rpID, rpName } from '~/core/constants';
 import { origin } from '~/core/constants';
 import { ErrorMessages } from '~/core/dictionary/error.messages';
 import { BadRequestError, UnauthorizedError } from '~/core/errors';
 import { logger } from '~/core/logger';
 import { authMiddleware } from '~/core/middleware/auth';
+import { modelToPlain } from '~/core/utils';
 import { isAuthenticated, UserCrudService } from '~/shared/user';
+import { UserCredentialCrudService } from '~/shared/UserCredential';
 
 const route = express.Router();
 
 route.post(
-  '/register',
+  '/generate-registration-options',
   authMiddleware,
   async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user;
@@ -35,35 +38,42 @@ route.post(
     }
 
     logger.info(
-      `Credential registration process started for user: ${user.email}`,
+      `[${req.traceId}] Generate registration options started by: ${user.email}`,
     );
 
-    const credentialEntities =
+    const userCredentialEntities =
       await UserCredentialCrudService.getCredentialByUserId(user.id);
 
-    const credentials = (credentialEntities?.map((entity) =>
-      entity.get({ plain: true }),
-    ) ?? []) as unknown as Array<Passkey>;
+    const userCredentials = modelToPlain<Array<Passkey>>(
+      userCredentialEntities,
+    );
 
-    const options = await generateRegistrationOptions({
+    const opts: GenerateRegistrationOptionsOpts = {
       rpName,
       rpID,
       userName: user.email,
+      timeout: 60000,
       attestationType: 'none',
-      excludeCredentials: credentials.map((passkey) => ({
+      excludeCredentials: userCredentials.map((passkey) => ({
         id: passkey.credId,
         transports: passkey.transports,
       })),
       authenticatorSelection: {
-        residentKey: 'preferred',
+        residentKey: 'discouraged',
         userVerification: 'preferred',
-        authenticatorAttachment: 'platform',
       },
+      supportedAlgorithmIDs: [-7, -257],
+    };
+
+    const options = await generateRegistrationOptions(opts);
+
+    logger.info(
+      `[${req.traceId}] Generated challenge options: ${JSON.stringify(options)}`,
+    );
+
+    await redis.set(mapToChallengeKey(user.email), options.challenge, {
+      EX: ONE_MINUTE * 15,
     });
-
-    logger.info(`Generated challenge options: ${JSON.stringify(options)}`);
-
-    await redis.set(mapToChallengeKey(user.email), JSON.stringify(options));
 
     res.status(200).json(options);
   },
@@ -79,47 +89,68 @@ route.post(
       return next(new UnauthorizedError(ErrorMessages.unauthorized));
     }
 
-    const userChallengeOptions = await redis
-      .get(mapToChallengeKey(user.email))
-      .then<PublicKeyCredentialCreationOptionsJSON | null>((data) =>
-        data ? JSON.parse(data) : null,
-      );
+    const expectedChallenge = await redis.get(mapToChallengeKey(user.email));
 
-    if (!userChallengeOptions) {
-      return res.status(400).json({ error: 'Challenge not found' });
+    if (!expectedChallenge) {
+      return res.status(400).json({ error: 'Expected challenge not found' });
     }
 
     try {
-      logger.info(`Body: ${JSON.stringify(req.body)}`);
+      logger.info(`[${req.traceId}] Body: ${JSON.stringify(req.body)}`);
 
-      logger.info(`Challenge: ${JSON.stringify(userChallengeOptions)}`);
+      logger.info(
+        `[${req.traceId}] Challenge: ${JSON.stringify(expectedChallenge)}`,
+      );
 
-      logger.info(`Expected origin: ${origin}`);
+      logger.info(`[${req.traceId}] Expected origin: ${origin}`);
 
-      const verification = await verifyRegistrationResponse({
+      const opts: VerifyRegistrationResponseOpts = {
         response: req.body,
-        expectedChallenge: userChallengeOptions.challenge,
+        expectedChallenge: `${expectedChallenge}`,
         expectedOrigin: origin,
         expectedRPID: rpID,
         requireUserVerification: false,
-      });
+      };
 
-      if (verification.verified) {
-        const { registrationInfo } = verification;
+      const verification = await verifyRegistrationResponse(opts);
 
-        logger.info(
-          `Registration verified for user: ${user.email}. Saving into DB`,
+      const { verified, registrationInfo } = verification;
+
+      if (!verified) {
+        logger.warn(
+          `[${req.traceId}] Registration verifications failed for user: ${user.email}.`,
         );
+        return res
+          .status(401)
+          .json({ success: false, message: 'Verification failed' });
+      }
 
-        if (!registrationInfo) {
-          return res
-            .status(400)
-            .json({ error: 'Registration info not provided' });
-        }
+      if (!registrationInfo) {
+        logger.warn(
+          `[${req.traceId}] Registration info not found for user: ${user.email}.`,
+        );
+        return res
+          .status(401)
+          .json({ success: false, message: 'Registration info not found' });
+      }
 
+      logger.info(
+        `[${req.traceId}] Registration verified for user: ${user.email}. Saving into DB`,
+      );
+
+      const userCredEntities =
+        await UserCredentialCrudService.getCredentialByUserId(user.id);
+
+      const userCredentials = modelToPlain<Array<Passkey>>(userCredEntities);
+
+      const existingCredential = userCredentials.find(
+        (cred) => cred.id === registrationInfo.credential.id,
+      );
+
+      if (!existingCredential) {
         await UserCredentialCrudService.saveCredential({
           userId: user.id,
-          webauthnUserID: userChallengeOptions.user.id,
+          webauthnUserID: user.id,
           credId: registrationInfo.credential.id,
           publicKey: registrationInfo.credential.publicKey,
           deviceType: registrationInfo.credentialDeviceType,
@@ -127,9 +158,9 @@ route.post(
           counter: registrationInfo.credential.counter,
           transports: registrationInfo.credential.transports,
         });
-
-        return res.status(200).json({ success: true, data: registrationInfo });
       }
+
+      return res.status(200).json({ success: true, verified });
     } catch (error: unknown) {
       logger.error(`Error verifying registration: ${error}`);
       return res.status(404).json({ isSuccess: false, error });

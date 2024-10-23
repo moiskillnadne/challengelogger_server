@@ -1,5 +1,3 @@
-import { Model } from 'sequelize';
-
 import { UserCredential } from '~/database/models/UserCredential';
 
 interface CreateCredentialPayload {
@@ -19,9 +17,7 @@ interface UpdateCredentialCounterPayload {
 }
 
 export class UserCredentialCrudService {
-  static async getCredentialByUserId(
-    userId: string,
-  ): Promise<Model<typeof UserCredential>[] | null> {
+  static async getCredentialByUserId(userId: string) {
     return UserCredential.findAll({ where: { userId } });
   }
 

@@ -140,14 +140,14 @@ route.post(
 
       res.cookie(Cookies.accessToken, accessToken, {
         httpOnly: true,
-        secure: isProduction,
+        secure: true,
         maxAge: ONE_MINUTE * 15,
         sameSite: isProduction ? 'strict' : 'lax',
       });
 
       res.cookie(Cookies.refreshToken, refreshToken, {
         httpOnly: true,
-        secure: isProduction,
+        secure: true,
         maxAge: ONE_MONTH,
         sameSite: isProduction ? 'strict' : 'lax',
         path: '/api/auth/refresh-token',
@@ -281,7 +281,7 @@ route.post(
 
       res.cookie(Cookies.accessToken, accessToken, {
         httpOnly: true,
-        secure: isProduction,
+        secure: true,
         maxAge: ONE_MINUTE * 15,
         sameSite: isProduction ? 'strict' : 'lax',
       });

@@ -4,19 +4,12 @@ import { ConfirmLoginBodySchema, LoginBodySchema } from './validation.schema';
 import { logger } from '../../core/logger';
 
 import { Cookies, Env, ONE_MINUTE, ONE_MONTH } from '~/core/constants';
-import { ErrorMessages } from '~/core/dictionary/error.messages';
-import {
-  BadRequestError,
-  UnauthorizedError,
-  UnprocessableEntityError,
-} from '~/core/errors/';
-import { authMiddleware } from '~/core/middleware/auth';
+import { BadRequestError, UnprocessableEntityError } from '~/core/errors/';
 import { generateOTP, isProduction } from '~/core/utils';
 import { jwtService } from '~/core/utils';
 import { SendGridService } from '~/integration/SendGrid';
 import { redis } from '~/redis';
 import { mapToOTPKey, mapToRefreshTokenKey } from '~/redis/mappers';
-import { isAuthenticated } from '~/shared/user';
 import { UserCrudService } from '~/shared/user/User.crud';
 
 const route = express.Router();
@@ -178,18 +171,38 @@ route.post(
 
 route.post(
   '/logout',
-  authMiddleware,
   async (req: Request, res: Response, next: NextFunction) => {
-    const user = req.user;
+    const cookies = req.cookies;
 
-    if (!isAuthenticated(user)) {
-      return next(new UnauthorizedError(ErrorMessages.unauthorized));
+    const refreshToken = cookies[Cookies.refreshToken] ?? null;
+
+    if (!refreshToken) {
+      return next(new BadRequestError('Refresh token is missing'));
+    }
+
+    try {
+      const tokenData = jwtService.verifyToken({
+        token: refreshToken,
+        secret: Env.JWT_REFRESH_SECRET ?? '',
+      });
+
+      if (typeof tokenData === 'string') {
+        return next(new BadRequestError('Token expired'));
+      }
+
+      const userEmail = tokenData['email'] ?? null;
+
+      if (!userEmail) {
+        return next(new BadRequestError('Tokent data is missing'));
+      }
+
+      await redis.del(mapToRefreshTokenKey(userEmail));
+    } catch (error: unknown) {
+      return next(error);
     }
 
     res.clearCookie(Cookies.accessToken);
     res.clearCookie(Cookies.refreshToken);
-
-    await redis.del(mapToRefreshTokenKey(user.email));
 
     return res.status(204).json({
       type: 'LOGOUT_SUCCESS',

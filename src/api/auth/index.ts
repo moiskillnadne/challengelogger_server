@@ -142,14 +142,14 @@ route.post(
         httpOnly: true,
         secure: true,
         maxAge: ONE_MINUTE * 15,
-        sameSite: isProduction ? 'strict' : 'lax',
+        sameSite: isProduction ? 'strict' : 'none',
       });
 
       res.cookie(Cookies.refreshToken, refreshToken, {
         httpOnly: true,
         secure: true,
         maxAge: ONE_MONTH,
-        sameSite: isProduction ? 'strict' : 'lax',
+        sameSite: isProduction ? 'strict' : 'none',
         path: '/api/auth/refresh-token',
       });
 
@@ -283,7 +283,7 @@ route.post(
         httpOnly: true,
         secure: true,
         maxAge: ONE_MINUTE * 15,
-        sameSite: isProduction ? 'strict' : 'lax',
+        sameSite: isProduction ? 'strict' : 'none',
       });
 
       // TODO: Check the fingerprint of the device, if it's the same like "TRUST DEVICE" of user

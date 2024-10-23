@@ -1,11 +1,12 @@
 import express, { NextFunction, Request, Response } from 'express';
 
+import { CookieTokensService } from './CookieTokensService';
 import { ConfirmLoginBodySchema, LoginBodySchema } from './validation.schema';
 import { logger } from '../../core/logger';
 
 import { Cookies, Env, ONE_MINUTE, ONE_MONTH } from '~/core/constants';
 import { BadRequestError, UnprocessableEntityError } from '~/core/errors/';
-import { generateOTP, isProduction } from '~/core/utils';
+import { generateOTP } from '~/core/utils';
 import { jwtService } from '~/core/utils';
 import { SendGridService } from '~/integration/SendGrid';
 import { redis } from '~/redis';
@@ -131,20 +132,8 @@ route.post(
         },
       });
 
-      res.cookie(Cookies.accessToken, accessToken, {
-        httpOnly: true,
-        secure: true,
-        maxAge: ONE_MINUTE * 15,
-        sameSite: isProduction ? 'strict' : 'none',
-      });
-
-      res.cookie(Cookies.refreshToken, refreshToken, {
-        httpOnly: true,
-        secure: true,
-        maxAge: ONE_MONTH,
-        sameSite: isProduction ? 'strict' : 'none',
-        path: '/api/auth/refresh-token',
-      });
+      CookieTokensService.setAccessTokenCookie(res, accessToken);
+      CookieTokensService.setRefreshTokenCookie(res, refreshToken);
 
       // Save refresh token to Redis (White list of refresh tokens)
       await redis.set(
@@ -201,8 +190,7 @@ route.post(
       return next(error);
     }
 
-    res.clearCookie(Cookies.accessToken);
-    res.clearCookie(Cookies.refreshToken);
+    CookieTokensService.clearCookies(res);
 
     return res.status(204).json({
       type: 'LOGOUT_SUCCESS',
@@ -235,8 +223,7 @@ route.post(
       );
 
       if (typeof decoded === 'string') {
-        res.clearCookie(Cookies.accessToken);
-        res.clearCookie(Cookies.refreshToken);
+        CookieTokensService.clearCookies(res);
 
         return res.status(404).json({
           type: 'TOKEN_EXPIRED',
@@ -254,8 +241,7 @@ route.post(
       );
 
       if (!emailFromToken) {
-        res.clearCookie(Cookies.accessToken);
-        res.clearCookie(Cookies.refreshToken);
+        CookieTokensService.clearCookies(res);
 
         return res.status(404).json({
           type: 'TOKEN_EXPIRED',
@@ -273,8 +259,7 @@ route.post(
       logger.info(`Refresh token from Redis: ${refreshTokenFromRedis}`);
 
       if (!refreshTokenFromRedis) {
-        res.clearCookie(Cookies.accessToken);
-        res.clearCookie(Cookies.refreshToken);
+        CookieTokensService.clearCookies(res);
 
         return res.status(404).json({
           type: 'TOKEN_EXPIRED',
@@ -292,12 +277,7 @@ route.post(
         },
       });
 
-      res.cookie(Cookies.accessToken, accessToken, {
-        httpOnly: true,
-        secure: true,
-        maxAge: ONE_MINUTE * 15,
-        sameSite: isProduction ? 'strict' : 'none',
-      });
+      CookieTokensService.setAccessTokenCookie(res, accessToken);
 
       // TODO: Check the fingerprint of the device, if it's the same like "TRUST DEVICE" of user
       // then refresh the refresh token as well

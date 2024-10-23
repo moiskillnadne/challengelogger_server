@@ -21,6 +21,13 @@ export const UserCredential = Sequelize.define(
     publicKey: {
       type: DataTypes.BLOB,
       allowNull: false,
+      get() {
+        const storedValue = this.getDataValue('publicKey');
+        return storedValue ? new Uint8Array(storedValue) : null;
+      },
+      set(value) {
+        this.setDataValue('publicKey', Buffer.from(value as Uint8Array));
+      },
     },
 
     webauthnUserID: {

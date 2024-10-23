@@ -160,6 +160,8 @@ route.post(
         });
       }
 
+      await redis.del(mapToChallengeKey(user.email));
+
       return res.status(200).json({ success: true, verified });
     } catch (error: unknown) {
       logger.error(`Error verifying registration: ${error}`);

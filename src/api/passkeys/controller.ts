@@ -148,6 +148,13 @@ route.post(
       );
 
       if (!existingCredential) {
+        logger.info(
+          `[${req.traceId}] Public key: ${registrationInfo.credential.publicKey}`,
+        );
+        logger.info(
+          `[${req.traceId}] Public key length: ${registrationInfo.credential.publicKey.length}`,
+        );
+
         await UserCredentialCrudService.saveCredential({
           userId: user.id,
           webauthnUserID: user.id,
@@ -255,6 +262,11 @@ route.post(
         new BadRequestError('Authenticator is not registered with this site'),
       );
     }
+
+    logger.info(`[${req.traceId}] Public key found: ${passkey.publicKey}`);
+    logger.info(
+      `[${req.traceId}] Public key length: ${passkey.publicKey.length}`,
+    );
 
     const expectedChallenge = await redis.get(mapToChallengeKey(email));
 

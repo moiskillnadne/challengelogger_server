@@ -1,5 +1,6 @@
 import {
   generateAuthenticationOptions,
+  GenerateAuthenticationOptionsOpts,
   generateRegistrationOptions,
   GenerateRegistrationOptionsOpts,
   verifyAuthenticationResponse,
@@ -7,7 +8,6 @@ import {
   verifyRegistrationResponse,
   VerifyRegistrationResponseOpts,
 } from '@simplewebauthn/server';
-import { PublicKeyCredentialCreationOptionsJSON } from '@simplewebauthn/server/script/deps';
 import express, { NextFunction, Request, Response } from 'express';
 
 import { Passkey } from './types';
@@ -171,7 +171,7 @@ route.post(
 );
 
 route.post(
-  '/login',
+  '/generate-authentication-options',
   async (req: Request, res: Response, next: NextFunction) => {
     const safeParse = LoginBodySchema.safeParse(req.body);
 
@@ -190,27 +190,30 @@ route.post(
     }
 
     try {
-      const userCredentials = (user.dataValues.credentials?.map((entity: any) =>
-        entity.get({ plain: true }),
-      ) ?? []) as unknown as Array<Passkey>;
+      const userCredentials = modelToPlain<Array<Passkey>>(
+        user.dataValues.credentials,
+      );
 
-      const options = await generateAuthenticationOptions({
-        rpID,
+      const opt: GenerateAuthenticationOptionsOpts = {
+        timeout: 60000,
         allowCredentials: userCredentials.map((passkey: Passkey) => ({
           id: passkey.credId,
+          type: 'public-key',
           transports: passkey.transports,
         })),
-      });
+        userVerification: 'preferred',
+        rpID,
+      };
 
-      const optionsJSON = JSON.stringify(options);
+      const options = await generateAuthenticationOptions(opt);
 
-      logger.info(`Authentication challenge options: ${optionsJSON}`);
+      logger.info(`Authentication challenge: ${options.challenge}`);
 
-      await redis.set(mapToChallengeKey(email), optionsJSON, {
+      await redis.set(mapToChallengeKey(email), options.challenge, {
         EX: ONE_MINUTE * 15,
       });
 
-      res.status(200).json({ success: true, data: options });
+      res.status(200).json({ success: true, options });
     } catch (error: unknown) {
       logger.error(`Error generating challenge: ${error}`);
       return next(error);
@@ -219,7 +222,7 @@ route.post(
 );
 
 route.post(
-  '/verify-login',
+  '/verify-authentication',
   async (req: Request, res: Response, next: NextFunction) => {
     const { email, challengeResponse } = req.body;
 
@@ -239,38 +242,36 @@ route.post(
       return next(new UnauthorizedError(ErrorMessages.unauthorized));
     }
 
-    const userChallengeOptions = await redis
-      .get(mapToChallengeKey(email))
-      .then<PublicKeyCredentialCreationOptionsJSON | null>((data) =>
-        data ? JSON.parse(data) : null,
-      );
-
-    logger.info(
-      `Challenge from redis: ${JSON.stringify(userChallengeOptions)}`,
+    const userCredentials = modelToPlain<Array<Passkey>>(
+      user.dataValues.credentials,
     );
-
-    if (!userChallengeOptions) {
-      return next(new BadRequestError('Challenge not found'));
-    }
-
-    const userCredentials = (user.dataValues.credentials?.map((entity: any) =>
-      entity.get({ plain: true }),
-    ) ?? []) as unknown as Array<Passkey>;
 
     const passkey = userCredentials.find(
       (passkey) => passkey.credId === challengeResponse.id,
     );
 
     if (!passkey) {
-      return next(new BadRequestError('Passkey not found'));
+      return next(
+        new BadRequestError('Authenticator is not registered with this site'),
+      );
+    }
+
+    const expectedChallenge = await redis.get(mapToChallengeKey(email));
+
+    logger.info(
+      `Expected Challenge from redis: ${JSON.stringify(expectedChallenge)}`,
+    );
+
+    if (!expectedChallenge) {
+      return next(new BadRequestError('Challenge not found'));
     }
 
     logger.info(`Found passkey: ${JSON.stringify(passkey)}`);
 
     try {
-      const verifyChallengeOptions: VerifyAuthenticationResponseOpts = {
+      const opts: VerifyAuthenticationResponseOpts = {
         response: challengeResponse,
-        expectedChallenge: userChallengeOptions.challenge,
+        expectedChallenge: `${expectedChallenge}`,
         expectedOrigin: origin,
         expectedRPID: rpID,
         credential: {
@@ -282,13 +283,9 @@ route.post(
         requireUserVerification: false,
       };
 
-      logger.info(
-        `Verify challenge options: ${JSON.stringify(verifyChallengeOptions)}`,
-      );
+      logger.info(`Verify challenge options: ${JSON.stringify(opts)}`);
 
-      const verification = await verifyAuthenticationResponse(
-        verifyChallengeOptions,
-      );
+      const verification = await verifyAuthenticationResponse(opts);
 
       logger.info(`Verification result: ${JSON.stringify(verification)}`);
 

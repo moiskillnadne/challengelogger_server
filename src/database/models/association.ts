@@ -17,7 +17,7 @@ UserChallenge.belongsTo(User, {
 // UserChallenge model
 UserChallenge.hasMany(UserChallengeProgress, {
   foreignKey: 'userChallengeId',
-  as: 'progresses',
+  as: 'progress',
 });
 UserChallengeProgress.belongsTo(UserChallenge, {
   foreignKey: 'userChallengeId',

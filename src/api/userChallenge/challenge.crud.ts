@@ -1,4 +1,5 @@
 import { CreateChallengeDBPayload, FindByParams } from './validation.schema';
+import { UserChallengeProgress } from '../../database/models/UserChallengeProgress';
 
 import { UserChallenge } from '~/database/models/UserChallenge';
 
@@ -17,6 +18,21 @@ export class UserChallengeCrud {
         id: params.id,
         userId: params.userId,
       },
+    });
+  }
+
+  static findOneByParamsWithProgress(params: FindByParams) {
+    return UserChallenge.findOne({
+      where: {
+        id: params.id,
+        userId: params.userId,
+      },
+      include: [
+        {
+          model: UserChallengeProgress,
+          as: 'progress',
+        },
+      ],
     });
   }
 

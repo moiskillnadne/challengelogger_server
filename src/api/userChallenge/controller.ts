@@ -53,7 +53,7 @@ route.get(
     const { challengeId } = req.params;
 
     try {
-      const dbresult = await UserChallengeCrud.findOneByParams({
+      const dbresult = await UserChallengeCrud.findOneByParamsWithProgress({
         id: challengeId,
         userId: user.id,
       });

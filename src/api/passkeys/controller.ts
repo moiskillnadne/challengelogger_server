@@ -12,16 +12,17 @@ import express, { NextFunction, Request, Response } from 'express';
 
 import { Passkey } from './types';
 import { redis } from '../../redis';
-import { mapToChallengeKey } from '../../redis/mappers';
+import { mapToChallengeKey, mapToRefreshTokenKey } from '../../redis/mappers';
+import { CookieTokensService } from '../auth/CookieTokensService';
 import { LoginBodySchema } from '../auth/validation.schema';
 
-import { ONE_MINUTE, rpID, rpName } from '~/core/constants';
+import { Env, ONE_MINUTE, ONE_MONTH, rpID, rpName } from '~/core/constants';
 import { origin } from '~/core/constants';
 import { ErrorMessages } from '~/core/dictionary/error.messages';
 import { BadRequestError, UnauthorizedError } from '~/core/errors';
 import { logger } from '~/core/logger';
 import { authMiddleware } from '~/core/middleware/auth';
-import { modelToPlain } from '~/core/utils';
+import { jwtService, modelToPlain } from '~/core/utils';
 import { isAuthenticated, UserCrudService } from '~/shared/user';
 import { UserCredentialCrudService } from '~/shared/UserCredential';
 
@@ -309,6 +310,30 @@ route.post(
         await UserCredentialCrudService.updateCredentialCounter({
           credId: passkey.credId,
           counter: updatedCounter,
+        });
+
+        const accessToken = jwtService.generateToken({
+          secret: Env.JWT_ACCESS_SECRET ?? '',
+          expiresIn: ONE_MINUTE * 15,
+          payload: {
+            email,
+          },
+        });
+
+        const refreshToken = jwtService.generateToken({
+          secret: Env.JWT_REFRESH_SECRET ?? '',
+          expiresIn: ONE_MONTH,
+          payload: {
+            email,
+          },
+        });
+
+        CookieTokensService.setAccessTokenCookie(res, accessToken);
+        CookieTokensService.setRefreshTokenCookie(res, refreshToken);
+
+        // Save refresh token to Redis (White list of refresh tokens)
+        await redis.set(mapToRefreshTokenKey(email), refreshToken, {
+          EX: ONE_MONTH,
         });
 
         return res.status(200).json({ success: true });

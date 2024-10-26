@@ -22,4 +22,6 @@ export const Env = {
   REDIS_HOST: process.env.REDIS_HOST,
   REDIS_PORT: process.env.REDIS_PORT,
   REDIS_DB: process.env.REDIS_DB,
+
+  RP_ID: process.env.RP_ID,
 };

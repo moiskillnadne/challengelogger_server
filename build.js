@@ -17,6 +17,7 @@ const env = {
   'process.env.REDIS_HOST': JSON.stringify(process.env.REDIS_HOST),
   'process.env.REDIS_PORT': JSON.stringify(process.env.REDIS_PORT),
   'process.env.REDIS_DB': JSON.stringify(process.env.REDIS_DB),
+  'process.env.RP_ID': JSON.stringify(process.env.RP_ID),
 };
 
 

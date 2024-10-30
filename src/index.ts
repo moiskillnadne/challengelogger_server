@@ -2,6 +2,7 @@ import '~/integration/Sentry';
 
 import * as Sentry from '@sentry/node';
 import cookieParser from 'cookie-parser';
+import cors from 'cors';
 import express, { Request, Response } from 'express';
 import helmet from 'helmet';
 
@@ -34,6 +35,20 @@ process.on('unhandledRejection', (reason: unknown) => {
 
 const app = express();
 const PORT = Env.APP_PORT || 3000;
+
+if (Env.APP_ENV === 'local') {
+  app.use(
+    cors({
+      origin: [
+        'https://localhost:3000',
+        'http://localhost:3000',
+        'https://localhost:5173',
+        'http://localhost:5173',
+      ],
+      credentials: true,
+    }),
+  );
+}
 
 app.use(helmet());
 

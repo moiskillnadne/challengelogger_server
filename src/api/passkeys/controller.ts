@@ -194,7 +194,10 @@ route.post(
     const user = await UserCrudService.getUserByEmailWithCredentials(email);
 
     if (!user) {
-      return next(new UnauthorizedError(ErrorMessages.unauthorized));
+        return res.status(400).json({
+            challenge: '',
+            allowCredentials: [],
+        });
     }
 
     try {

@@ -194,10 +194,10 @@ route.post(
     const user = await UserCrudService.getUserByEmailWithCredentials(email);
 
     if (!user) {
-        return res.status(400).json({
-            challenge: '',
-            allowCredentials: [],
-        });
+      return res.status(400).json({
+        challenge: '',
+        allowCredentials: [],
+      });
     }
 
     try {
@@ -350,7 +350,7 @@ route.post(
 );
 
 route.get(
-  '/pass-keys',
+  '/',
   authMiddleware,
   async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user;
@@ -359,9 +359,7 @@ route.get(
       return next(new UnauthorizedError(ErrorMessages.unauthorized));
     }
 
-    logger.info(
-      `[${req.traceId}] Get user passKeys started by: ${user.email}`,
-    );
+    logger.info(`[${req.traceId}] Get user passKeys started by: ${user.email}`);
 
     const userCredentialEntities =
       await UserCredentialCrudService.getCredentialByUserId(user.id);
@@ -370,11 +368,13 @@ route.get(
       userCredentialEntities,
     );
 
-    const userPassKeysResult: PasskeyResult[] = userCredentials.map((passkey) => ({
+    const userPassKeysResult: PasskeyResult[] = userCredentials.map(
+      (passkey) => ({
         id: passkey.id,
         name: passkey.credId,
         counter: passkey.counter,
-    }));
+      }),
+    );
 
     res.status(200).json(userPassKeysResult);
   },

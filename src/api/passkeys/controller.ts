@@ -10,7 +10,7 @@ import {
 } from '@simplewebauthn/server';
 import express, { NextFunction, Request, Response } from 'express';
 
-import { Passkey } from './types';
+import { Passkey, PasskeyResult } from './types';
 import { redis } from '../../redis';
 import { mapToChallengeKey, mapToRefreshTokenKey } from '../../redis/mappers';
 import { CookieTokensService } from '../auth/CookieTokensService';
@@ -349,4 +349,34 @@ route.post(
   },
 );
 
+route.get(
+  '/pass-keys',
+  authMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user;
+
+    if (!isAuthenticated(user)) {
+      return next(new UnauthorizedError(ErrorMessages.unauthorized));
+    }
+
+    logger.info(
+      `[${req.traceId}] Get user passKeys started by: ${user.email}`,
+    );
+
+    const userCredentialEntities =
+      await UserCredentialCrudService.getCredentialByUserId(user.id);
+
+    const userCredentials = modelToPlain<Array<Passkey>>(
+      userCredentialEntities,
+    );
+
+    const userPassKeysResult: PasskeyResult[] = userCredentials.map((passkey) => ({
+        id: passkey.id,
+        name: passkey.credId,
+        counter: passkey.counter,
+    }));
+
+    res.status(200).json(userPassKeysResult);
+  },
+);
 export default route;

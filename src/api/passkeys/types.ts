@@ -14,3 +14,9 @@ export interface Passkey {
   backedUp: boolean;
   transports?: AuthenticatorTransportFuture[];
 }
+
+export interface PasskeyResult {
+  id: string;
+  name: string;
+  counter: number;
+}

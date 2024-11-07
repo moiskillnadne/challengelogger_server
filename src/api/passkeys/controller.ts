@@ -19,7 +19,11 @@ import { LoginBodySchema } from '../auth/validation.schema';
 import { Env, ONE_MINUTE, ONE_MONTH, rpID, rpName } from '~/core/constants';
 import { origin } from '~/core/constants';
 import { ErrorMessages } from '~/core/dictionary/error.messages';
-import { BadRequestError, UnauthorizedError } from '~/core/errors';
+import {
+  BadRequestError,
+  NotFoundError,
+  UnauthorizedError,
+} from '~/core/errors';
 import { logger } from '~/core/logger';
 import { authMiddleware } from '~/core/middleware/auth';
 import { jwtService, modelToPlain } from '~/core/utils';
@@ -379,4 +383,39 @@ route.get(
     res.status(200).json(userPassKeysResult);
   },
 );
+
+route.delete(
+  '/:passkeyId',
+  authMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user;
+
+    if (!isAuthenticated(user)) {
+      return next(new UnauthorizedError(ErrorMessages.unauthorized));
+    }
+
+    const passkeyId = req.params.passkeyId;
+
+    try {
+      const deleteResult = await UserCredentialCrudService.deleteOneByParams({
+        id: passkeyId,
+        userId: user.id,
+      });
+
+      if (deleteResult === 0) {
+        throw new NotFoundError('Passkey not found');
+      }
+
+      return res.status(200).json({
+        type: 'PASSKEY_DELETED',
+        statusCode: 200,
+        message: 'Passkey deleted successfully',
+        isSuccess: true,
+      });
+    } catch (error: unknown) {
+      return next(error);
+    }
+  },
+);
+
 export default route;

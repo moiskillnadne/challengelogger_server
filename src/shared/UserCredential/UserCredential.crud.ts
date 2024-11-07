@@ -16,6 +16,11 @@ interface UpdateCredentialCounterPayload {
   counter: number;
 }
 
+export interface DeleteByParams {
+  id: string;
+  userId: string;
+}
+
 export class UserCredentialCrudService {
   static async getCredentialByUserId(userId: string) {
     return UserCredential.findAll({ where: { userId } });
@@ -41,5 +46,14 @@ export class UserCredentialCrudService {
       { counter: payload.counter },
       { where: { credId: payload.credId } },
     );
+  }
+
+  static deleteOneByParams(params: DeleteByParams) {
+    return UserCredential.destroy({
+      where: {
+        id: params.id,
+        userId: params.userId,
+      },
+    });
   }
 }

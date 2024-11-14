@@ -1,12 +1,12 @@
 import express, { NextFunction, Request, Response } from 'express';
 
+import { UserDeviceCrud } from '~/api/userDevice/device.crud';
+import { CreateDeviceSchema } from '~/api/userDevice/validation.schema';
 import { ErrorMessages } from '~/core/dictionary/error.messages';
 import { UnauthorizedError, UnprocessableEntityError } from '~/core/errors';
 import { logger } from '~/core/logger';
 import { authMiddleware } from '~/core/middleware/auth';
 import { isAuthenticated } from '~/shared/user';
-import { UserDeviceCrud } from '~/api/userDevice/device.crud';
-import { CreateDeviceSchema } from '~/api/userDevice/validation.schema';
 
 const route = express.Router();
 

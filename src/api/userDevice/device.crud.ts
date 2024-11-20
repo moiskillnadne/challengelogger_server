@@ -1,6 +1,9 @@
 import { UserDevice } from '~/database/models/UserDevice';
 
-interface CreateDevicePayload {
+export interface UserDevice {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
   fingerprint: string;
   platform: string;
   platformVersion: string;
@@ -18,8 +21,20 @@ interface CreateDevicePayload {
   userId: string;
 }
 
+type CreateUserDevice = Omit<UserDevice, 'id' | 'createdAt' | 'updatedAt'>;
+
+export type UserDeviceResult = Omit<
+  UserDevice,
+  'fingerprint' | 'canvasFingerprint'
+> & { id: string; createdAt: string; updatedAt: string };
+
+interface DeleteByParams {
+  id: string;
+  userId: string;
+}
+
 export class UserDeviceCrud {
-  static async saveCredential(payload: CreateDevicePayload) {
+  static async saveDevice(payload: CreateUserDevice) {
     return UserDevice.create({
       fingerprint: payload.fingerprint,
       platform: payload.platform,
@@ -36,6 +51,19 @@ export class UserDeviceCrud {
       canvasFingerprint: payload.canvasFingerprint,
       userAgent: payload.userAgent,
       userId: payload.userId,
+    });
+  }
+
+  static async getDevicesByUserId(userId: string) {
+    return UserDevice.findAll({ where: { userId } });
+  }
+
+  static deleteOneByParams(params: DeleteByParams) {
+    return UserDevice.destroy({
+      where: {
+        id: params.id,
+        userId: params.userId,
+      },
     });
   }
 }

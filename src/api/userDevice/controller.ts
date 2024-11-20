@@ -14,8 +14,8 @@ import {
 } from '~/core/errors';
 import { logger } from '~/core/logger';
 import { authMiddleware } from '~/core/middleware/auth';
-import { isAuthenticated } from '~/shared/user';
 import { modelToPlain } from '~/core/utils';
+import { isAuthenticated } from '~/shared/user';
 
 const route = express.Router();
 

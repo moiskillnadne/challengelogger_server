@@ -42,7 +42,15 @@ const PORT = Env.APP_PORT || 3000;
 
 if (Env.APP_ENV !== 'prod') {
   const swaggerFilePath = path.join(__dirname, '../', 'dist/swagger.json');
-  const swaggerFile = fs.readFileSync(swaggerFilePath, 'utf8') ?? {};
+
+  let swaggerFile: string = '{}';
+  try {
+    swaggerFile = fs.readFileSync(swaggerFilePath, 'utf8');
+  } catch (error: unknown) {
+    logger.error(JSON.stringify(error));
+    logger.error(`Unhandled Swagger File: ${swaggerFile}`);
+  }
+
   const swaggerDocument = JSON.parse(swaggerFile);
 
   app.use('/api/swagger', serve, setup(swaggerDocument));
@@ -80,7 +88,7 @@ app.use('/api/protected/challenge', authMiddleware, ChallengeRoute);
 app.use('/api/protected/userDevice', authMiddleware, UserDeviceRoute);
 
 app.get('/api/healthcheck', (req: Request, res: Response) => {
-  return res.status(200).send('OK');
+  res.status(200).send('OK');
 });
 
 app.all('*', (req: Request, res: Response) => {

@@ -48,6 +48,5 @@ esbuild
       ...env,
     },
     minify: true,
-    legalComments: 'none',
   })
   .catch(() => process.exit(1));

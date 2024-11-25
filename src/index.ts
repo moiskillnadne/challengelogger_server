@@ -42,7 +42,8 @@ const PORT = Env.APP_PORT || 3000;
 
 if (Env.APP_ENV !== 'prod') {
   const swaggerFilePath = path.join(__dirname, '../', 'dist/swagger.json');
-  const swaggerDocument = JSON.parse(fs.readFileSync(swaggerFilePath, 'utf8'));
+  const swaggerFile = fs.readFileSync(swaggerFilePath, 'utf8') ?? {};
+  const swaggerDocument = JSON.parse(swaggerFile);
 
   app.use('/api/swagger', serve, setup(swaggerDocument));
 }

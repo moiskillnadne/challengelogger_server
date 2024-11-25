@@ -16,6 +16,7 @@ export const UserMeta = Sequelize.define(
       type: DataTypes.BOOLEAN,
       allowNull: false,
       unique: false,
+      defaultValue: false,
     },
 
     userId: {

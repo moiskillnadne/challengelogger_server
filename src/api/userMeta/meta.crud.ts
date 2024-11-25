@@ -10,8 +10,6 @@ export interface UserMeta {
 
 type CreateUserMetaPayload = Omit<UserMeta, 'id' | 'createdAt' | 'updatedAt'>;
 
-export type UserMetaResult = Omit<UserMeta, 'userId'>;
-
 export class UserMetaCrud {
   static async saveMeta(payload: CreateUserMetaPayload) {
     return UserMeta.create({
@@ -21,6 +19,6 @@ export class UserMetaCrud {
   }
 
   static async getMetaByUserId(userId: string) {
-    return UserMeta.findAll({ where: { userId } });
+    return UserMeta.findOne({ where: { userId } });
   }
 }

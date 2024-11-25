@@ -21,7 +21,7 @@ route.post(
     try {
       const validationResult = LoginBodySchema.safeParse(req.body);
 
-      if (validationResult.success === false) {
+      if (!validationResult.success) {
         throw new UnprocessableEntityError(
           validationResult.error.errors[0].message,
         );
@@ -100,7 +100,7 @@ route.post(
     try {
       const validationResult = ConfirmLoginBodySchema.safeParse(req.body);
 
-      if (validationResult.success === false) {
+      if (!validationResult.success) {
         throw new UnprocessableEntityError(
           validationResult.error.errors[0].message,
         );

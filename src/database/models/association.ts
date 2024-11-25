@@ -48,7 +48,7 @@ UserCredential.belongsTo(User, {
 });
 
 // UserMeta model
-User.hasMany(UserMeta, {
+User.hasOne(UserMeta, {
   foreignKey: 'userId',
   as: 'meta',
 });

@@ -1,4 +1,5 @@
-import jsdoc from 'swagger-jsdoc';
+import swaggerJsdoc from 'swagger-jsdoc';
+import fs from 'fs';
 
 const options = {
   definition: {
@@ -7,13 +8,12 @@ const options = {
       title: 'Challengelogger API', // Название API
       version: '1.0.0', // Версия API
     },
-    servers: [
-      {
-        url: 'http://localhost:3001', // Базовый URL
-      },
-    ],
+    servers: [],
   },
   apis: ['./src/**/*.ts'], // Пути к файлам с комментариями
 };
 
-export const swaggerSpecs = jsdoc(options);
+const swaggerSpec = swaggerJsdoc(options);
+
+fs.writeFileSync('./dist/swagger.json', JSON.stringify(swaggerSpec, null, 2));
+console.log('Swagger documentation generated successfully!');

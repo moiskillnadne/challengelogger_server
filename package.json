@@ -12,7 +12,8 @@
     "db:migrate": "dotenvx run -- sequelize db:migrate",
     "db:migrate:undo": "dotenvx run -- sequelize db:migrate:undo",
     "test": "dotenvx run -f .env.test -- jest",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "generateSwaggerDocs": "node ./generateSwaggerDocs.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-cloudwatch-logs": "^3.664.0",

@@ -5,8 +5,10 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express, { Request, Response } from 'express';
 import helmet from 'helmet';
+import { serve, setup } from 'swagger-ui-express';
 
 import { redis } from './redis';
+import { swaggerSpecs } from './swagger';
 
 import AuthRouter from '~/api/auth';
 import PasskeysRouter from '~/api/passkeys/controller';
@@ -36,6 +38,10 @@ process.on('unhandledRejection', (reason: unknown) => {
 
 const app = express();
 const PORT = Env.APP_PORT || 3000;
+
+if (Env.APP_ENV !== 'prod') {
+  app.use('/api/swagger', serve, setup(swaggerSpecs));
+}
 
 if (Env.APP_ENV === 'local') {
   app.use(
@@ -82,7 +88,8 @@ app.all('*', (req: Request, res: Response) => {
 app.use(exceptionsHandlerMiddleware);
 
 app.listen(PORT, async () => {
-  logger.info(`Server is running on port ${PORT}`);
+  logger.info(`Server is running on port http://localhost:${PORT}`);
+  logger.info(`Swagger docs available at http://localhost:${PORT}/api/swagger`);
 
   await redis.connect();
 

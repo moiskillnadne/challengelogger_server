@@ -39,7 +39,9 @@ process.on('unhandledRejection', (reason: unknown) => {
 const app = express();
 const PORT = Env.APP_PORT || 3000;
 
-app.use('/swagger', serve, setup(swaggerSpecs));
+if (Env.APP_ENV !== 'prod') {
+  app.use('/api/swagger', serve, setup(swaggerSpecs));
+}
 
 if (Env.APP_ENV === 'local') {
   app.use(
@@ -87,7 +89,7 @@ app.use(exceptionsHandlerMiddleware);
 
 app.listen(PORT, async () => {
   logger.info(`Server is running on port http://localhost:${PORT}`);
-  logger.info(`Swagger docs available at http://localhost:${PORT}/swagger`);
+  logger.info(`Swagger docs available at http://localhost:${PORT}/api/swagger`);
 
   await redis.connect();
 

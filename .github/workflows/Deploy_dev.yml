@@ -36,5 +36,6 @@ jobs:
             corepack enable
             yarn install --frozen-lockfile
             yarn build
+            yarn generateSwaggerDocs
             yarn db:migrate
             pm2 restart /root/apps/challengelogger/ecosystem.config.js

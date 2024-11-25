@@ -1,5 +1,6 @@
 import swaggerJsdoc from 'swagger-jsdoc';
 import fs from 'fs';
+import path from 'node:path';
 
 const options = {
   definition: {
@@ -15,5 +16,12 @@ const options = {
 
 const swaggerSpec = swaggerJsdoc(options);
 
-fs.writeFileSync('./dist/swagger.json', JSON.stringify(swaggerSpec, null, 2));
+const outputDir = './dist';
+const outputPath = path.join(outputDir, 'swagger.json');
+
+if (!fs.existsSync(outputDir)) {
+  fs.mkdirSync(outputDir, { recursive: true });
+}
+
+fs.writeFileSync(outputPath, JSON.stringify(swaggerSpec, null, 2));
 console.log('Swagger documentation generated successfully!');

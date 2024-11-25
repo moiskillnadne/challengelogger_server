@@ -16,6 +16,7 @@ import PasskeysRouter from '~/api/passkeys/controller';
 import UserRoute from '~/api/user';
 import ChallengeRoute from '~/api/userChallenge/controller';
 import UserDeviceRoute from '~/api/userDevice/controller';
+import UserMetaRoute from '~/api/userMeta/controller';
 import { Env } from '~/core/constants';
 import { logger } from '~/core/logger';
 import { httpLogger } from '~/core/logger/middleware';
@@ -86,6 +87,8 @@ app.use('/api/protected/user', authMiddleware, UserRoute);
 app.use('/api/protected/challenge', authMiddleware, ChallengeRoute);
 
 app.use('/api/protected/userDevice', authMiddleware, UserDeviceRoute);
+
+app.use('/api/protected/userMeta', authMiddleware, UserMetaRoute);
 
 app.get('/api/healthcheck', (req: Request, res: Response) => {
   res.status(200).send('OK');

@@ -21,7 +21,7 @@ const route = express.Router();
 
 /**
  * @swagger
- * /api/protected/userDevice/save-device-meta:
+ * /api/protected/userDevice/save:
  *   post:
  *     summary: Save user device metadata
  *     tags: [User Device]
@@ -152,7 +152,7 @@ const route = express.Router();
  *                   example: Internal server error
  */
 route.post(
-  '/save-device-meta',
+  '/save',
   authMiddleware,
   async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user;

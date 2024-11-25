@@ -18,7 +18,7 @@ const route = express.Router();
 
 /**
  * @swagger
- * /api/protected/userMeta/save-user-meta:
+ * /api/protected/userMeta/save:
  *   post:
  *     summary: Save user metadata
  *     tags: [userMeta]
@@ -110,7 +110,7 @@ const route = express.Router();
  *                   example: Internal server error
  */
 route.post(
-  '/save-user-meta',
+  '/save',
   authMiddleware,
   async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user;

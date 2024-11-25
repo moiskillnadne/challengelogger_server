@@ -17,6 +17,92 @@ import { isAuthenticated } from '~/shared/user';
 
 const route = express.Router();
 
+/**
+ * @swagger
+ * /api/protected/challenge/:
+ *   get:
+ *     summary: Fetch the list of challenges for the authenticated user
+ *     tags: [Challenges]
+ *     security:
+ *       - bearerAuth: []  # Indicates that authentication is required
+ *     responses:
+ *       200:
+ *         description: Successfully fetched the list of challenges
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: CHALLENGE_LIST_FETCHED
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 200
+ *                 message:
+ *                   type: string
+ *                   example: Challenge list fetched successfully
+ *                 isSuccess:
+ *                   type: boolean
+ *                   example: true
+ *                 details:
+ *                   type: object
+ *                   properties:
+ *                     challenges:
+ *                       type: array
+ *                       description: List of challenges
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: string
+ *                             example: "challenge-id"
+ *                           title:
+ *                             type: string
+ *                             example: "Complete 5k run"
+ *                           description:
+ *                             type: string
+ *                             example: "A challenge to complete a 5-kilometer run"
+ *                           status:
+ *                             type: string
+ *                             example: "active"
+ *                           createdAt:
+ *                             type: string
+ *                             format: date-time
+ *                             example: "2024-01-01T12:00:00Z"
+ *       401:
+ *         description: Unauthorized - User is not authenticated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: ERROR
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 401
+ *                 message:
+ *                   type: string
+ *                   example: Unauthorized
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: SERVER_ERROR
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 500
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ */
 route.get('/', async (req: Request, res: Response, next: NextFunction) => {
   const user = req.user;
 
@@ -41,6 +127,117 @@ route.get('/', async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/protected/challenge/{challengeId}:
+ *   get:
+ *     summary: Fetch details of a specific challenge by its ID
+ *     tags: [Challenges]
+ *     security:
+ *       - bearerAuth: []  # Indicates that authentication is required
+ *     parameters:
+ *       - in: path
+ *         name: challengeId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The unique ID of the challenge
+ *     responses:
+ *       200:
+ *         description: Successfully fetched the challenge details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: CHALLENGE_FETCHED
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 200
+ *                 message:
+ *                   type: string
+ *                   example: Challenge fetched successfully
+ *                 isSuccess:
+ *                   type: boolean
+ *                   example: true
+ *                 details:
+ *                   type: object
+ *                   properties:
+ *                     challenge:
+ *                       type: object
+ *                       description: The challenge details
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                           example: "challenge-id"
+ *                         title:
+ *                           type: string
+ *                           example: "Complete 5k run"
+ *                         description:
+ *                           type: string
+ *                           example: "A challenge to complete a 5-kilometer run"
+ *                         status:
+ *                           type: string
+ *                           example: "active"
+ *                         progress:
+ *                           type: integer
+ *                           description: Progress percentage
+ *                           example: 50
+ *                         createdAt:
+ *                           type: string
+ *                           format: date-time
+ *                           example: "2024-01-01T12:00:00Z"
+ *       401:
+ *         description: Unauthorized - User is not authenticated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: ERROR
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 401
+ *                 message:
+ *                   type: string
+ *                   example: Unauthorized
+ *       404:
+ *         description: Challenge not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: NOT_FOUND
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 404
+ *                 message:
+ *                   type: string
+ *                   example: A challenge with such parameters was not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: SERVER_ERROR
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 500
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ */
 route.get(
   '/:challengeId',
   async (req: Request, res: Response, next: NextFunction) => {
@@ -81,6 +278,90 @@ route.get(
   },
 );
 
+/**
+ * @swagger
+ * /api/protected/challenge/{challengeId}:
+ *   delete:
+ *     summary: Delete a specific challenge by its ID
+ *     tags: [Challenges]
+ *     security:
+ *       - bearerAuth: []  # Indicates that authentication is required
+ *     parameters:
+ *       - in: path
+ *         name: challengeId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The unique ID of the challenge to be deleted
+ *     responses:
+ *       200:
+ *         description: Challenge successfully deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: CHALLENGE_DELETED
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 200
+ *                 message:
+ *                   type: string
+ *                   example: Challenge deleted successfully
+ *                 isSuccess:
+ *                   type: boolean
+ *                   example: true
+ *       401:
+ *         description: Unauthorized - User is not authenticated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: ERROR
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 401
+ *                 message:
+ *                   type: string
+ *                   example: Unauthorized
+ *       404:
+ *         description: Challenge not found for the given ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: NOT_FOUND
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 404
+ *                 message:
+ *                   type: string
+ *                   example: Challenge not found
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: SERVER_ERROR
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 500
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ */
 route.delete(
   '/:challengeId',
   async (req: Request, res: Response, next: NextFunction) => {
@@ -114,6 +395,144 @@ route.delete(
   },
 );
 
+/**
+ * @swagger
+ * /api/protected/challenge/create:
+ *   post:
+ *     summary: Create a new challenge for the authenticated user
+ *     tags: [Challenges]
+ *     security:
+ *       - bearerAuth: []  # Indicates that authentication is required
+ *     requestBody:
+ *       required: true
+ *       description: The data required to create a new challenge
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 description: The title of the challenge
+ *                 example: "Complete 5k run"
+ *               description:
+ *                 type: string
+ *                 description: A brief description of the challenge
+ *                 example: "A challenge to complete a 5-kilometer run"
+ *               status:
+ *                 type: string
+ *                 description: The status of the challenge
+ *                 enum: [active, completed, pending]
+ *                 example: "active"
+ *               startDate:
+ *                 type: string
+ *                 format: date
+ *                 description: The start date of the challenge
+ *                 example: "2024-01-01"
+ *               endDate:
+ *                 type: string
+ *                 format: date
+ *                 description: The end date of the challenge
+ *                 example: "2024-02-01"
+ *     responses:
+ *       201:
+ *         description: Challenge successfully created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: CHALLENGE_CREATED
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 201
+ *                 message:
+ *                   type: string
+ *                   example: Challenge created successfully
+ *                 isSuccess:
+ *                   type: boolean
+ *                   example: true
+ *                 details:
+ *                   type: object
+ *                   properties:
+ *                     challenge:
+ *                       type: object
+ *                       description: The details of the created challenge
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                           example: "challenge-id"
+ *                         title:
+ *                           type: string
+ *                           example: "Complete 5k run"
+ *                         description:
+ *                           type: string
+ *                           example: "A challenge to complete a 5-kilometer run"
+ *                         status:
+ *                           type: string
+ *                           example: "active"
+ *                         startDate:
+ *                           type: string
+ *                           format: date
+ *                           example: "2024-01-01"
+ *                         endDate:
+ *                           type: string
+ *                           format: date
+ *                           example: "2024-02-01"
+ *                         userId:
+ *                           type: string
+ *                           example: "user-id"
+ *       401:
+ *         description: Unauthorized - User is not authenticated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: ERROR
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 401
+ *                 message:
+ *                   type: string
+ *                   example: Unauthorized
+ *       422:
+ *         description: Invalid data in the request body
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: ERROR
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 422
+ *                 message:
+ *                   type: string
+ *                   example: "Invalid data provided"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: SERVER_ERROR
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 500
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ */
 route.post(
   '/create',
   async (req: Request, res: Response, next: NextFunction) => {
@@ -152,6 +571,110 @@ route.post(
   },
 );
 
+/**
+ * @swagger
+ * /api/protected/challenge/check-in:
+ *   post:
+ *     summary: Log progress for a challenge
+ *     tags: [Challenges]
+ *     requestBody:
+ *       required: true
+ *       description: Data to log progress for a challenge
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               challengeId:
+ *                 type: string
+ *                 description: The ID of the challenge
+ *                 example: "challenge-id"
+ *               checkpointDate:
+ *                 type: string
+ *                 format: date
+ *                 description: The date of the progress checkpoint
+ *                 example: "2024-01-15"
+ *               progress:
+ *                 type: integer
+ *                 description: The progress value to log
+ *                 example: 25
+ *     responses:
+ *       201:
+ *         description: Challenge progress successfully created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: CHALLENGE_PROGRESS_CREATED
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 201
+ *                 message:
+ *                   type: string
+ *                   example: "Challenge progress created successfully. Current checkpoint date is 2024-01-15"
+ *                 isSuccess:
+ *                   type: boolean
+ *                   example: true
+ *                 details:
+ *                   type: object
+ *                   properties:
+ *                     challenge:
+ *                       type: object
+ *                       description: The details of the created progress log
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                           example: "progress-id"
+ *                         challengeId:
+ *                           type: string
+ *                           example: "challenge-id"
+ *                         checkpointDate:
+ *                           type: string
+ *                           format: date
+ *                           example: "2024-01-15"
+ *                         progress:
+ *                           type: integer
+ *                           example: 25
+ *                         createdAt:
+ *                           type: string
+ *                           format: date-time
+ *                           example: "2024-01-15T12:00:00Z"
+ *       422:
+ *         description: Invalid data in the request body
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: ERROR
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 422
+ *                 message:
+ *                   type: string
+ *                   example: "Invalid data provided"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: SERVER_ERROR
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 500
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ */
 route.post(
   '/check-in',
   async (req: Request, res: Response, next: NextFunction) => {
@@ -181,6 +704,90 @@ route.post(
   },
 );
 
+/**
+ * @swagger
+ * /api/protected/challenge/check-in/{progressId}:
+ *   delete:
+ *     summary: Delete a specific progress log by its ID
+ *     tags: [Challenges]
+ *     security:
+ *       - bearerAuth: []  # Indicates that authentication is required
+ *     parameters:
+ *       - in: path
+ *         name: progressId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The unique ID of the progress log to be deleted
+ *     responses:
+ *       200:
+ *         description: Progress successfully deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: PROGRESS_DELETED
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 200
+ *                 message:
+ *                   type: string
+ *                   example: Progress deleted successfully
+ *                 isSuccess:
+ *                   type: boolean
+ *                   example: true
+ *       401:
+ *         description: Unauthorized - User is not authenticated or not the owner of the challenge
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: ERROR
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 401
+ *                 message:
+ *                   type: string
+ *                   example: "You are not the owner of the challenge."
+ *       404:
+ *         description: Progress not found for the given ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: NOT_FOUND
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 404
+ *                 message:
+ *                   type: string
+ *                   example: "Progress not found. Progress id: {progressId}"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: SERVER_ERROR
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 500
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ */
 route.delete(
   '/check-in/:progressId',
   async (req: Request, res: Response, next: NextFunction) => {
@@ -228,6 +835,98 @@ route.delete(
   },
 );
 
+/**
+ * @swagger
+ * /api/protected/challenge/progress/{challengeId}:
+ *   get:
+ *     summary: Fetch progress logs for a specific challenge
+ *     tags: [Challenges]
+ *     parameters:
+ *       - in: path
+ *         name: challengeId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The unique ID of the challenge
+ *     responses:
+ *       200:
+ *         description: Successfully fetched progress logs for the challenge
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: CHALLENGE_PROGRESS_FETCHED
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 200
+ *                 message:
+ *                   type: string
+ *                   example: Challenge progress fetched successfully
+ *                 isSuccess:
+ *                   type: boolean
+ *                   example: true
+ *                 details:
+ *                   type: object
+ *                   properties:
+ *                     challengeProgress:
+ *                       type: array
+ *                       description: List of progress logs for the challenge
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: string
+ *                             example: "progress-id"
+ *                           challengeId:
+ *                             type: string
+ *                             example: "challenge-id"
+ *                           checkpointDate:
+ *                             type: string
+ *                             format: date
+ *                             example: "2024-01-15"
+ *                           progress:
+ *                             type: integer
+ *                             example: 25
+ *                           createdAt:
+ *                             type: string
+ *                             format: date-time
+ *                             example: "2024-01-15T12:00:00Z"
+ *       404:
+ *         description: Challenge progress not found for the given ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: NOT_FOUND
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 404
+ *                 message:
+ *                   type: string
+ *                   example: "Challenge progress not found"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: SERVER_ERROR
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 500
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ */
 route.get(
   '/progress/:challengeId',
   async (req: Request, res: Response, next: NextFunction) => {

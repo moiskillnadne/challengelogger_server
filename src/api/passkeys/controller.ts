@@ -11,8 +11,6 @@ import {
 import express, { NextFunction, Request, Response } from 'express';
 
 import { Passkey, PasskeyResult } from './types';
-import { redis } from '../../redis';
-import { mapToChallengeKey, mapToRefreshTokenKey } from '../../redis/mappers';
 import { CookieTokensService } from '../auth/CookieTokensService';
 import { LoginBodySchema } from '../auth/validation.schema';
 
@@ -27,11 +25,106 @@ import {
 import { logger } from '~/core/logger';
 import { authMiddleware } from '~/core/middleware/auth';
 import { jwtService, modelToPlain } from '~/core/utils';
+import { redis } from '~/redis';
+import { mapToChallengeKey, mapToRefreshTokenKey } from '~/redis/mappers';
 import { isAuthenticated, UserCrudService } from '~/shared/user';
 import { UserCredentialCrudService } from '~/shared/UserCredential';
 
 const route = express.Router();
 
+/**
+ * @swagger
+ * /api/protected/passkeys/generate-registration-options:
+ *   post:
+ *     summary: Generate options for passkey registration
+ *     tags: [Passkeys]
+ *     security:
+ *       - bearerAuth: []  # Indicates that this route requires authentication
+ *     responses:
+ *       200:
+ *         description: Registration options successfully generated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 rpName:
+ *                   type: string
+ *                   example: My Application
+ *                 rpID:
+ *                   type: string
+ *                   example: myapp.com
+ *                 userName:
+ *                   type: string
+ *                   example: user@example.com
+ *                 timeout:
+ *                   type: integer
+ *                   example: 60000
+ *                 attestationType:
+ *                   type: string
+ *                   example: none
+ *                 excludeCredentials:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         description: Credential ID
+ *                       transports:
+ *                         type: array
+ *                         items:
+ *                           type: string
+ *                 authenticatorSelection:
+ *                   type: object
+ *                   properties:
+ *                     residentKey:
+ *                       type: string
+ *                       example: discouraged
+ *                     userVerification:
+ *                       type: string
+ *                       example: preferred
+ *                 supportedAlgorithmIDs:
+ *                   type: array
+ *                   items:
+ *                     type: integer
+ *                     example: -7
+ *                 challenge:
+ *                   type: string
+ *                   example: "random-base64-encoded-challenge"
+ *       401:
+ *         description: Unauthorized user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: ERROR
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 401
+ *                 message:
+ *                   type: string
+ *                   example: Unauthorized
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: SERVER_ERROR
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 500
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ */
 route.post(
   '/generate-registration-options',
   authMiddleware,
@@ -84,6 +177,113 @@ route.post(
   },
 );
 
+/**
+ * @swagger
+ * /api/protected/passkeys/verify-registration:
+ *   post:
+ *     summary: Verify passkey registration response
+ *     tags: [Passkeys]
+ *     security:
+ *       - bearerAuth: []  # Indicates that this route requires authentication
+ *     requestBody:
+ *       required: true
+ *       description: Passkey registration response to verify
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: string
+ *                 description: Credential ID
+ *                 example: "cred-id-example"
+ *               rawId:
+ *                 type: string
+ *                 description: Raw ID of the credential
+ *                 example: "raw-id-example"
+ *               response:
+ *                 type: object
+ *                 description: Credential response
+ *                 properties:
+ *                   clientDataJSON:
+ *                     type: string
+ *                     description: Client data JSON, base64 encoded
+ *                     example: "eyJ0eXAiOiJKV1QiLC..."
+ *                   attestationObject:
+ *                     type: string
+ *                     description: Attestation object, base64 encoded
+ *                     example: "eyJvcmlnaW4iOiJodHRwczovL2..."
+ *               type:
+ *                 type: string
+ *                 description: The type of credential ("public-key")
+ *                 example: "public-key"
+ *     responses:
+ *       200:
+ *         description: Registration successfully verified
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 verified:
+ *                   type: boolean
+ *                   example: true
+ *       400:
+ *         description: Expected challenge not found or invalid request data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Expected challenge not found"
+ *       401:
+ *         description: Verification failed or registration info missing
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Verification failed"
+ *       404:
+ *         description: Error during registration verification
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 isSuccess:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "Error message"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: SERVER_ERROR
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 500
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ */
 route.post(
   '/verify-registration',
   authMiddleware,
@@ -182,6 +382,102 @@ route.post(
   },
 );
 
+/**
+ * @swagger
+ * /api/protected/passkeys/generate-authentication-options:
+ *   post:
+ *     summary: Generate options for user authentication
+ *     tags: [Passkeys]
+ *     requestBody:
+ *       required: true
+ *       description: Request body containing the user's email
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: The email of the user attempting to authenticate
+ *                 example: user@example.com
+ *     responses:
+ *       200:
+ *         description: Authentication options successfully generated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 options:
+ *                   type: object
+ *                   properties:
+ *                     timeout:
+ *                       type: integer
+ *                       example: 60000
+ *                     allowCredentials:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: string
+ *                             description: Credential ID
+ *                             example: "credential-id-example"
+ *                           type:
+ *                             type: string
+ *                             description: Credential type
+ *                             example: "public-key"
+ *                           transports:
+ *                             type: array
+ *                             items:
+ *                               type: string
+ *                               description: Supported transport types
+ *                               example: "usb"
+ *                     userVerification:
+ *                       type: string
+ *                       example: "preferred"
+ *                     rpID:
+ *                       type: string
+ *                       description: Relying Party ID
+ *                       example: "example.com"
+ *                     challenge:
+ *                       type: string
+ *                       example: "random-challenge-string"
+ *       400:
+ *         description: Invalid user email or user not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 challenge:
+ *                   type: string
+ *                   example: ""
+ *                 allowCredentials:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: "SERVER_ERROR"
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 500
+ *                 message:
+ *                   type: string
+ *                   example: "Internal server error"
+ */
 route.post(
   '/generate-authentication-options',
   async (req: Request, res: Response, next: NextFunction) => {
@@ -236,6 +532,108 @@ route.post(
   },
 );
 
+/**
+ * @swagger
+ * /api/protected/passkeys/verify-authentication:
+ *   post:
+ *     summary: Verify authentication challenge response
+ *     tags: [Passkeys]
+ *     requestBody:
+ *       required: true
+ *       description: Request body containing the email and challenge response
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: The email of the user attempting to authenticate
+ *                 example: user@example.com
+ *               challengeResponse:
+ *                 type: object
+ *                 description: The response to the authentication challenge
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                     description: The credential ID
+ *                     example: "credential-id-example"
+ *                   rawId:
+ *                     type: string
+ *                     description: The raw ID of the credential
+ *                     example: "raw-id-example"
+ *                   response:
+ *                     type: object
+ *                     properties:
+ *                       authenticatorData:
+ *                         type: string
+ *                         description: Authenticator data in base64 format
+ *                         example: "base64-encoded-authenticator-data"
+ *                       clientDataJSON:
+ *                         type: string
+ *                         description: Client data JSON in base64 format
+ *                         example: "base64-encoded-client-data-json"
+ *                       signature:
+ *                         type: string
+ *                         description: The signature of the authentication
+ *                         example: "base64-encoded-signature"
+ *                       userHandle:
+ *                         type: string
+ *                         description: Optional user handle
+ *                         example: "base64-encoded-user-handle"
+ *                   type:
+ *                     type: string
+ *                     description: The credential type
+ *                     example: "public-key"
+ *     responses:
+ *       200:
+ *         description: Authentication successfully verified
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *       400:
+ *         description: Missing email, challenge not found, or authenticator not registered
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Challenge not found"
+ *       401:
+ *         description: Verification failed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: "SERVER_ERROR"
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 500
+ *                 message:
+ *                   type: string
+ *                   example: "Internal server error"
+ */
 route.post(
   '/verify-authentication',
   async (req: Request, res: Response, next: NextFunction) => {

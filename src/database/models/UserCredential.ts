@@ -12,6 +12,12 @@ export const UserCredential = Sequelize.define(
       defaultValue: DataTypes.UUIDV4,
     },
 
+    deviceName: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      unique: false,
+    },
+
     credId: {
       type: DataTypes.TEXT,
       allowNull: false,

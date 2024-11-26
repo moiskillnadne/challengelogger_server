@@ -10,7 +10,7 @@ import {
 } from '@simplewebauthn/server';
 import express, { NextFunction, Request, Response } from 'express';
 
-import { Passkey, PasskeyResult } from './types';
+import { Passkey, PasskeyResult, TemporaryChallenge } from './types';
 import { CookieTokensService } from '../auth/CookieTokensService';
 import { LoginBodySchema } from '../auth/validation.schema';
 
@@ -40,6 +40,19 @@ const route = express.Router();
  *     tags: [Passkeys]
  *     security:
  *       - bearerAuth: []  # Indicates that this route requires authentication
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               deviceName:
+ *                 type: string
+ *                 description: The name of the device being registered.
+ *                 example: "My iPhone"
+ *             required:
+ *               - deviceName
  *     responses:
  *       200:
  *         description: Registration options successfully generated
@@ -92,6 +105,22 @@ const route = express.Router();
  *                 challenge:
  *                   type: string
  *                   example: "random-base64-encoded-challenge"
+ *       400:
+ *         description: Bad request. The property "deviceName" is required.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: ERROR
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 400
+ *                 message:
+ *                   type: string
+ *                   example: "The property 'deviceName' is required"
  *       401:
  *         description: Unauthorized user
  *         content:
@@ -135,6 +164,12 @@ route.post(
       return next(new UnauthorizedError(ErrorMessages.unauthorized));
     }
 
+    const deviceName: string | null = req.body.deviceName ?? null;
+
+    if (!deviceName) {
+      return next(new BadRequestError('The property "deviceName" is required'));
+    }
+
     logger.info(
       `[${req.traceId}] Generate registration options started by: ${user.email}`,
     );
@@ -169,9 +204,18 @@ route.post(
       `[${req.traceId}] Generated challenge options: ${JSON.stringify(options)}`,
     );
 
-    await redis.set(mapToChallengeKey(user.email), options.challenge, {
-      EX: ONE_MINUTE * 15,
-    });
+    const tempChallenge: TemporaryChallenge = {
+      challenge: options.challenge,
+      deviceName: deviceName,
+    };
+
+    await redis.set(
+      mapToChallengeKey(user.email),
+      JSON.stringify(tempChallenge),
+      {
+        EX: ONE_MINUTE * 15,
+      },
+    );
 
     res.status(200).json(options);
   },
@@ -294,24 +338,30 @@ route.post(
       return next(new UnauthorizedError(ErrorMessages.unauthorized));
     }
 
-    const expectedChallenge = await redis.get(mapToChallengeKey(user.email));
+    const expectedChallengeJSON = await redis.get(
+      mapToChallengeKey(user.email),
+    );
 
-    if (!expectedChallenge) {
+    if (!expectedChallengeJSON) {
       return res.status(400).json({ error: 'Expected challenge not found' });
     }
 
     try {
+      const expectedChallenge: TemporaryChallenge = JSON.parse(
+        expectedChallengeJSON,
+      );
+
       logger.info(`[${req.traceId}] Body: ${JSON.stringify(req.body)}`);
 
       logger.info(
-        `[${req.traceId}] Challenge: ${JSON.stringify(expectedChallenge)}`,
+        `[${req.traceId}] Challenge: ${JSON.stringify(expectedChallenge.challenge)}`,
       );
 
       logger.info(`[${req.traceId}] Expected origin: ${origin}`);
 
       const opts: VerifyRegistrationResponseOpts = {
         response: req.body,
-        expectedChallenge: `${expectedChallenge}`,
+        expectedChallenge: `${expectedChallenge.challenge}`,
         expectedOrigin: origin,
         expectedRPID: rpID,
         requireUserVerification: false,
@@ -369,6 +419,7 @@ route.post(
           backedUp: registrationInfo.credentialBackedUp,
           counter: registrationInfo.credential.counter,
           transports: registrationInfo.credential.transports,
+          deviceName: expectedChallenge.deviceName,
         });
       }
 
@@ -741,7 +792,9 @@ route.post(
           EX: ONE_MONTH,
         });
 
-        return res.status(200).json({ success: true });
+        return res
+          .status(200)
+          .json({ success: true, deviceName: passkey.deviceName });
       }
 
       return res.status(401).json({ success: false });
@@ -751,6 +804,61 @@ route.post(
   },
 );
 
+/**
+ * @swagger
+ * /:
+ *   get:
+ *     summary: Get user passkeys
+ *     description: Retrieve a list of passkeys associated with the authenticated user.
+ *     tags:
+ *       - Passkeys
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: A list of user passkeys.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                     description: The unique identifier of the passkey.
+ *                     example: "abc123"
+ *                   deviceName:
+ *                     type: string
+ *                     description: The name of device.
+ *                     example: "Viktor iPhone"
+ *                   counter:
+ *                     type: integer
+ *                     description: The counter value associated with the passkey.
+ *                     example: 42
+ *       401:
+ *         description: Unauthorized. User is not authenticated.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   description: Error message.
+ *                   example: "Unauthorized"
+ *       500:
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   description: Error message.
+ *                   example: "Internal Server Error"
+ */
 route.get(
   '/',
   authMiddleware,
@@ -773,7 +881,7 @@ route.get(
     const userPassKeysResult: PasskeyResult[] = userCredentials.map(
       (passkey) => ({
         id: passkey.id,
-        name: passkey.credId,
+        deviceName: passkey.deviceName,
         counter: passkey.counter,
       }),
     );
@@ -782,6 +890,82 @@ route.get(
   },
 );
 
+/**
+ * @swagger
+ * /{passkeyId}:
+ *   delete:
+ *     summary: Delete a user passkey
+ *     description: Deletes a specific passkey associated with the authenticated user.
+ *     tags:
+ *       - Passkeys
+ *     parameters:
+ *       - in: path
+ *         name: passkeyId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The unique identifier of the passkey to delete.
+ *         example: "abc123"
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Passkey deleted successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   description: The type of response.
+ *                   example: "PASSKEY_DELETED"
+ *                 statusCode:
+ *                   type: integer
+ *                   description: HTTP status code.
+ *                   example: 200
+ *                 message:
+ *                   type: string
+ *                   description: Success message.
+ *                   example: "Passkey deleted successfully"
+ *                 isSuccess:
+ *                   type: boolean
+ *                   description: Indicates whether the operation was successful.
+ *                   example: true
+ *       401:
+ *         description: Unauthorized. User is not authenticated.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   description: Error message.
+ *                   example: "Unauthorized"
+ *       404:
+ *         description: Passkey not found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   description: Error message.
+ *                   example: "Passkey not found"
+ *       500:
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   description: Error message.
+ *                   example: "Internal Server Error"
+ */
 route.delete(
   '/:passkeyId',
   authMiddleware,

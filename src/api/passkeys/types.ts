@@ -13,10 +13,16 @@ export interface Passkey {
   deviceType: CredentialDeviceType;
   backedUp: boolean;
   transports?: AuthenticatorTransportFuture[];
+  deviceName: string;
 }
 
 export interface PasskeyResult {
   id: string;
-  name: string;
+  deviceName: string;
   counter: number;
+}
+
+export interface TemporaryChallenge {
+  deviceName: string;
+  challenge: string;
 }

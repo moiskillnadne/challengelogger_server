@@ -6,6 +6,7 @@ interface CreateCredentialPayload {
   webauthnUserID: string;
   counter: number;
   deviceType: string;
+  deviceName: string;
   backedUp: boolean;
   transports?: string[];
   userId: string;
@@ -36,6 +37,7 @@ export class UserCredentialCrudService {
       backedUp: payload.backedUp,
       transports: payload.transports,
       userId: payload.userId,
+      deviceName: payload.deviceName,
     });
   }
 

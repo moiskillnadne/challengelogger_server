@@ -1,4 +1,5 @@
 import z from 'zod';
+import { ChallengeType } from '~/shared/userChallenge';
 
 export interface FindByParams {
   id: string;
@@ -10,6 +11,7 @@ export const CreateChallengeSchema = z.object({
   startedAtDate: z.string().date(),
   duration: z.number(),
   description: z.string().max(500).or(z.null()),
+  type: z.enum(Object.values(ChallengeType) as [string, ...string[]]),
 });
 
 export type CreateChallengeReqPayload = z.infer<typeof CreateChallengeSchema>;

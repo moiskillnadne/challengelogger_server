@@ -2,6 +2,7 @@ import { DataTypes } from 'sequelize';
 
 import Sequelize from '../connection';
 import { User } from './User';
+
 import { ChallengeType } from '~/shared/userChallenge';
 
 const ChallengeTypeValues = Object.values(ChallengeType);

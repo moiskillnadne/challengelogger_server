@@ -1,4 +1,5 @@
 import z from 'zod';
+
 import { ChallengeType } from '~/shared/userChallenge';
 
 export interface FindByParams {

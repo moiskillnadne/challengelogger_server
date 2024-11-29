@@ -1,8 +1,8 @@
 export enum ChallengeType {
-  Sport = 'Sport',
-  Language = 'Language',
-  Sugar = 'Sugar',
-  Water = 'Water',
-  Sleep = 'Sleep',
-  Other = 'Other',
+  Sport = 'SPORT',
+  Language = 'LANGUAGE',
+  Sugar = 'SUGAR',
+  Water = 'WATER',
+  Sleep = 'SLEEP',
+  Other = 'OTHER',
 }

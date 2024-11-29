@@ -1,7 +1,12 @@
+import { TransformableInfo } from 'logform';
 import winston from 'winston';
 import CloudWatch from 'winston-cloudwatch';
 
 const messageFormatter = (info: winston.LogEntry): string => {
+  return `${info.level}: ${info.message}`;
+};
+
+const printFormatter = (info: TransformableInfo): string => {
   return `${info.level}: ${info.message}`;
 };
 
@@ -21,6 +26,6 @@ const cloudWatchTransport = new CloudWatch({
 
 export const logger = winston.createLogger({
   level: 'info',
-  format: winston.format.printf(messageFormatter),
+  format: winston.format.printf(printFormatter),
   transports: [new winston.transports.Console({}), cloudWatchTransport],
 });

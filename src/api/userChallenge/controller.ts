@@ -411,6 +411,10 @@ route.delete(
  *           schema:
  *             type: object
  *             properties:
+ *               type:
+ *                 type: string // This is a enum type ["SPORT", "LANGUAGE", "SUGAR", "WATER", "SLEEP", "OTHER"]
+ *                 description: The type of the challenge
+ *                 example: "SPORT"
  *               title:
  *                 type: string
  *                 description: The title of the challenge

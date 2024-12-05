@@ -6,3 +6,8 @@ export enum ChallengeType {
   Sleep = 'SLEEP',
   Other = 'OTHER',
 }
+
+export enum ChallengeStatus {
+  'ACTIVE' = 'ACTIVE',
+  'COMPLETED' = 'COMPLETED',
+}

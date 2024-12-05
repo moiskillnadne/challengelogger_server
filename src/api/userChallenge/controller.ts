@@ -14,6 +14,7 @@ import {
   UnprocessableEntityError,
 } from '~/core/errors';
 import { isAuthenticated } from '~/shared/user';
+import { ChallengeStatus } from '~/shared/userChallenge';
 
 const route = express.Router();
 
@@ -110,8 +111,17 @@ route.get('/', async (req: Request, res: Response, next: NextFunction) => {
     return next(new UnauthorizedError(ErrorMessages.unauthorized));
   }
 
+  const status = req.query.status as ChallengeStatus;
+  const page = req.query.page as unknown as number;
+  const limit = req.query.limit as unknown as number;
+
   try {
-    const dbresult = await UserChallengeCrud.findManyByUserId(user.id);
+    const { data, pagination } = await UserChallengeCrud.findMany(
+      user.id,
+      status,
+      page,
+      limit,
+    );
 
     return res.status(200).json({
       type: 'CHALLENGE_LIST_FETCHED',
@@ -119,7 +129,8 @@ route.get('/', async (req: Request, res: Response, next: NextFunction) => {
       message: 'Challenge list fetched successfully',
       isSuccess: true,
       details: {
-        challenges: dbresult,
+        data,
+        meta: pagination,
       },
     });
   } catch (error: unknown) {

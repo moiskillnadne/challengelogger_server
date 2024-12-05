@@ -4,6 +4,11 @@ import { UserChallengeProgress } from '../../database/models/UserChallengeProgre
 import { UserChallenge } from '~/database/models/UserChallenge';
 import { ChallengeStatus } from '~/shared/userChallenge';
 
+type WhereClause = {
+  userId: string;
+  status?: ChallengeStatus;
+};
+
 export class UserChallengeCrud {
   static findManyByUserId(userId: string) {
     return UserChallenge.findAll({
@@ -21,7 +26,8 @@ export class UserChallengeCrud {
   ) {
     const offset = (page - 1) * limit;
 
-    const whereClause: any = { userId };
+    const whereClause: WhereClause = { userId };
+
     if (status) {
       whereClause.status = status;
     }

@@ -4,7 +4,6 @@ import Sequelize from '../connection';
 import { User } from './User';
 
 import {
-  ChallengeStatus,
   ChallengeStatusValues,
   ChallengeTypeValues,
 } from '~/shared/userChallenge';

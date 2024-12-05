@@ -112,16 +112,20 @@ route.get('/', async (req: Request, res: Response, next: NextFunction) => {
   }
 
   const status = req.query.status as ChallengeStatus;
-  const page = req.query.page as unknown as number;
-  const limit = req.query.limit as unknown as number;
+  const page = Number(req.query.page);
+  const limit = Number(req.query.limit);
 
   try {
-    const { data, pagination } = await UserChallengeCrud.findMany(
-      user.id,
-      status,
-      page,
-      limit,
-    );
+    const { data, pagination } = await UserChallengeCrud.findMany({
+      whereClause: {
+        userId: user.id,
+        status,
+      },
+      paginationParams: {
+        page,
+        limit,
+      },
+    });
 
     return res.status(200).json({
       type: 'CHALLENGE_LIST_FETCHED',

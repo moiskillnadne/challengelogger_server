@@ -1,12 +1,19 @@
 import { CreateChallengeDBPayload, FindByParams } from './validation.schema';
-import { UserChallengeProgress } from '../../database/models/UserChallengeProgress';
+import { UserChallengeProgress } from '~/database/models/UserChallengeProgress';
 
 import { UserChallenge } from '~/database/models/UserChallenge';
 import { ChallengeStatus } from '~/shared/userChallenge';
+import { PaginationRequest } from '~/core/interfaces';
+import { getPaginationMeta } from '~/core/utils';
 
 type WhereClause = {
   userId: string;
   status?: ChallengeStatus;
+};
+
+type FindManyParams = {
+  whereClause: WhereClause;
+  paginationParams: PaginationRequest;
 };
 
 export class UserChallengeCrud {
@@ -18,19 +25,10 @@ export class UserChallengeCrud {
     });
   }
 
-  static async findMany(
-    userId: string,
-    status: ChallengeStatus,
-    page: number = 1,
-    limit: number = 100,
-  ) {
+  static async findMany({ whereClause, paginationParams }: FindManyParams) {
+    const { page, limit } = paginationParams;
+
     const offset = (page - 1) * limit;
-
-    const whereClause: WhereClause = { userId };
-
-    if (status) {
-      whereClause.status = status;
-    }
 
     const { rows: challenges, count: totalRecords } =
       await UserChallenge.findAndCountAll({
@@ -39,17 +37,11 @@ export class UserChallengeCrud {
         offset,
       });
 
-    const totalPages = Math.ceil(totalRecords / limit);
+    const paginationMeta = getPaginationMeta(page, limit, totalRecords);
 
     return {
       data: challenges,
-      pagination: {
-        totalRecords,
-        totalPages,
-        currentPage: page,
-        nextPage: page < totalPages ? page + 1 : null,
-        prevPage: page > 1 ? page - 1 : null,
-      },
+      pagination: paginationMeta,
     };
   }
 

@@ -1,20 +1,20 @@
 import { CreateChallengeDBPayload, FindByParams } from './validation.schema';
-import { UserChallengeProgress } from '~/database/models/UserChallengeProgress';
 
-import { UserChallenge } from '~/database/models/UserChallenge';
-import { ChallengeStatus } from '~/shared/userChallenge';
 import { PaginationRequest } from '~/core/interfaces';
 import { getPaginationMeta } from '~/core/utils';
+import { UserChallenge } from '~/database/models/UserChallenge';
+import { UserChallengeProgress } from '~/database/models/UserChallengeProgress';
+import { ChallengeStatus } from '~/shared/userChallenge';
 
-type WhereClause = {
+interface WhereClause {
   userId: string;
   status?: ChallengeStatus;
-};
+}
 
-type FindManyParams = {
+interface FindManyParams {
   whereClause: WhereClause;
   paginationParams: PaginationRequest;
-};
+}
 
 export class UserChallengeCrud {
   static findManyByUserId(userId: string) {

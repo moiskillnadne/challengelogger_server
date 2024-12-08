@@ -32,7 +32,10 @@ export class UserChallengeCrud {
 
     const { rows: challenges, count: totalRecords } =
       await UserChallenge.findAndCountAll({
-        where: whereClause,
+        where: {
+          userId: whereClause.userId,
+          status: whereClause.status,
+        },
         limit,
         offset,
       });

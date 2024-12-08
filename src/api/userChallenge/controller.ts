@@ -3,6 +3,7 @@ import express, { NextFunction, Request, Response } from 'express';
 import { UserChallengeCrud } from './challenge.crud';
 import { UserChallengeProgressCrud } from './challengeProgress.crud';
 import {
+  ChallengeStatusFilterSchema,
   CreateChallengeProgressSchema,
   CreateChallengeSchema,
 } from './validation.schema';
@@ -13,6 +14,7 @@ import {
   UnauthorizedError,
   UnprocessableEntityError,
 } from '~/core/errors';
+import { PaginationParamsSchema } from '~/core/utils';
 import { isAuthenticated } from '~/shared/user';
 import { ChallengeStatus } from '~/shared/userChallenge';
 
@@ -111,19 +113,31 @@ route.get('/', async (req: Request, res: Response, next: NextFunction) => {
     return next(new UnauthorizedError(ErrorMessages.unauthorized));
   }
 
-  const status = req.query.status as ChallengeStatus;
-  const page = Number(req.query.page);
-  const limit = Number(req.query.limit);
+  const { status = ChallengeStatus.ACTIVE, page = 1, limit = 20 } = req.query;
+
+  const parsedPagination = PaginationParamsSchema.safeParse({ page, limit });
+
+  if (parsedPagination.error) {
+    throw new UnprocessableEntityError(
+      parsedPagination.error.errors[0].message,
+    );
+  }
+
+  const parsedFilter = ChallengeStatusFilterSchema.safeParse(status);
+
+  if (parsedFilter.error) {
+    throw new UnprocessableEntityError(parsedFilter.error.errors[0].message);
+  }
 
   try {
     const { data, pagination } = await UserChallengeCrud.findMany({
       whereClause: {
         userId: user.id,
-        status,
+        status: parsedFilter.data,
       },
       paginationParams: {
-        page,
-        limit,
+        page: parsedPagination.data?.page,
+        limit: parsedPagination.data?.limit,
       },
     });
 

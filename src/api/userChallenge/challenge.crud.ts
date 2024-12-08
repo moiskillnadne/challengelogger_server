@@ -1,7 +1,6 @@
 import { CreateChallengeDBPayload, FindByParams } from './validation.schema';
 
-import { PaginationRequest } from '~/core/interfaces';
-import { getPaginationMeta } from '~/core/utils';
+import { getPaginationMeta, PaginationParams } from '~/core/utils';
 import { UserChallenge } from '~/database/models/UserChallenge';
 import { UserChallengeProgress } from '~/database/models/UserChallengeProgress';
 import { ChallengeStatus } from '~/shared/userChallenge';
@@ -13,7 +12,7 @@ interface WhereClause {
 
 interface FindManyParams {
   whereClause: WhereClause;
-  paginationParams: PaginationRequest;
+  paginationParams: PaginationParams;
 }
 
 export class UserChallengeCrud {
@@ -40,7 +39,7 @@ export class UserChallengeCrud {
         offset,
       });
 
-    const paginationMeta = getPaginationMeta(page, limit, totalRecords);
+    const paginationMeta = getPaginationMeta({ page, limit, totalRecords });
 
     return {
       data: challenges,

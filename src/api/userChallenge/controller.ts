@@ -191,15 +191,17 @@ route.get('/', async (req: Request, res: Response, next: NextFunction) => {
   });
 
   if (parsedPagination.error) {
-    throw new UnprocessableEntityError(
-      parsedPagination.error.errors[0].message,
+    return next(
+      new UnprocessableEntityError(parsedPagination.error.errors[0].message),
     );
   }
 
   const parsedFilter = ChallengeStatusFilterSchema.safeParse(status);
 
   if (parsedFilter.error) {
-    throw new UnprocessableEntityError(parsedFilter.error.errors[0].message);
+    return next(
+      new UnprocessableEntityError(parsedFilter.error.errors[0].message),
+    );
   }
 
   try {

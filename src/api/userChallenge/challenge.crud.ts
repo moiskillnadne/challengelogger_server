@@ -1,7 +1,19 @@
 import { CreateChallengeDBPayload, FindByParams } from './validation.schema';
-import { UserChallengeProgress } from '../../database/models/UserChallengeProgress';
 
+import { getPaginationMeta, PaginationParams } from '~/core/utils';
 import { UserChallenge } from '~/database/models/UserChallenge';
+import { UserChallengeProgress } from '~/database/models/UserChallengeProgress';
+import { ChallengeStatus } from '~/shared/userChallenge';
+
+interface WhereClause {
+  userId: string;
+  status?: ChallengeStatus;
+}
+
+interface FindManyParams {
+  whereClause: WhereClause;
+  paginationParams: PaginationParams;
+}
 
 export class UserChallengeCrud {
   static findManyByUserId(userId: string) {
@@ -10,6 +22,29 @@ export class UserChallengeCrud {
         userId,
       },
     });
+  }
+
+  static async findMany({ whereClause, paginationParams }: FindManyParams) {
+    const { page, limit } = paginationParams;
+
+    const offset = (page - 1) * limit;
+
+    const { rows: challenges, count: totalRecords } =
+      await UserChallenge.findAndCountAll({
+        where: {
+          userId: whereClause.userId,
+          status: whereClause.status,
+        },
+        limit,
+        offset,
+      });
+
+    const paginationMeta = getPaginationMeta({ page, limit, totalRecords });
+
+    return {
+      data: challenges,
+      pagination: paginationMeta,
+    };
   }
 
   static findOneByParams(params: FindByParams) {

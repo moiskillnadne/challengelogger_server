@@ -2,4 +2,5 @@ export * from './generateOTP';
 export * from './jwt';
 export * from './buffer';
 export * from './modelToPlain';
+export * from './pagination';
 export * from './env';

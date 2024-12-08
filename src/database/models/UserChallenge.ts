@@ -3,7 +3,10 @@ import { DataTypes } from 'sequelize';
 import Sequelize from '../connection';
 import { User } from './User';
 
-import { ChallengeTypeValues } from '~/shared/userChallenge';
+import {
+  ChallengeStatusValues,
+  ChallengeTypeValues,
+} from '~/shared/userChallenge';
 
 export const UserChallenge = Sequelize.define(
   'userChallenge',
@@ -52,6 +55,14 @@ export const UserChallenge = Sequelize.define(
       allowNull: true,
       validate: {
         isIn: [ChallengeTypeValues],
+      },
+    },
+
+    status: {
+      type: DataTypes.ENUM(...ChallengeStatusValues),
+      allowNull: true,
+      validate: {
+        isIn: [ChallengeStatusValues],
       },
     },
 

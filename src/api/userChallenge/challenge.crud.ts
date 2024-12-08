@@ -29,10 +29,6 @@ export class UserChallengeCrud {
 
     const offset = (page - 1) * limit;
 
-    console.log(
-      `page: ${page}, limit: ${limit}, offset: ${offset}, status: ${whereClause.status}`,
-    );
-
     const { rows: challenges, count: totalRecords } =
       await UserChallenge.findAndCountAll({
         where: {

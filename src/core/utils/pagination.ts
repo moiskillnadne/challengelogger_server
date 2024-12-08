@@ -1,6 +1,4 @@
 import z from 'zod';
-import { ChallengeTypeValues } from '~/shared/userChallenge';
-import { CreateChallengeSchema } from '~/api/userChallenge/validation.schema';
 
 interface PaginationInput {
   page: number;

@@ -11,6 +11,8 @@
     "migration:generate": "sequelize-cli model:generate",
     "db:migrate": "dotenvx run -- sequelize db:migrate",
     "db:migrate:undo": "dotenvx run -- sequelize db:migrate:undo",
+    "migration:do": "sequelize-cli db:migrate",
+    "migration:undo": "sequelize-cli db:migrate:undo",
     "test": "dotenvx run -f .env.test -- jest",
     "lint": "eslint .",
     "generateSwaggerDocs": "node ./generateSwaggerDocs.mjs"

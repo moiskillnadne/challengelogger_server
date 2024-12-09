@@ -806,7 +806,7 @@ route.post(
 
 /**
  * @swagger
- * /:
+ * /api/protected/passkeys/:
  *   get:
  *     summary: Get user passkeys
  *     description: Retrieve a list of passkeys associated with the authenticated user.
@@ -892,7 +892,7 @@ route.get(
 
 /**
  * @swagger
- * /{passkeyId}:
+ * /api/protected/passkeys/{passkeyId}:
  *   delete:
  *     summary: Delete a user passkey
  *     description: Deletes a specific passkey associated with the authenticated user.

@@ -4,6 +4,7 @@ import { UserChallengeProgress } from './UserChallengeProgress';
 import { UserCredential } from './UserCredential';
 import { UserDevice } from './UserDevice';
 import { UserMeta } from './UserMeta';
+
 import { UserNotificationSettings } from '~/database/models/UserNotificationSettings';
 
 // User model

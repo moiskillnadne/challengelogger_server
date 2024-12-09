@@ -3,6 +3,7 @@ import express, { NextFunction, Request, Response } from 'express';
 import { UserChallengeCrud } from './challenge.crud';
 import { UserChallengeProgressCrud } from './challengeProgress.crud';
 import {
+  ChallengeStatusFilterSchema,
   CreateChallengeProgressSchema,
   CreateChallengeSchema,
 } from './validation.schema';
@@ -13,6 +14,7 @@ import {
   UnauthorizedError,
   UnprocessableEntityError,
 } from '~/core/errors';
+import { PaginationParamsSchema } from '~/core/utils';
 import { isAuthenticated } from '~/shared/user';
 import { ChallengeStatus } from '~/shared/userChallenge';
 
@@ -26,6 +28,28 @@ const route = express.Router();
  *     tags: [Challenges]
  *     security:
  *       - bearerAuth: []  # Indicates that authentication is required
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [ACTIVE, COMPLETED]
+ *         description: Filter challenges by their status (ACTIVE or COMPLETED)
+ *         required: false
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: The page number for pagination
+ *         required: false
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: The number of items per page
+ *         required: false
  *     responses:
  *       200:
  *         description: Successfully fetched the list of challenges
@@ -49,7 +73,7 @@ const route = express.Router();
  *                 details:
  *                   type: object
  *                   properties:
- *                     challenges:
+ *                     data:
  *                       type: array
  *                       description: List of challenges
  *                       items:
@@ -66,11 +90,43 @@ const route = express.Router();
  *                             example: "A challenge to complete a 5-kilometer run"
  *                           status:
  *                             type: string
- *                             example: "active"
+ *                             example: "ACTIVE"
  *                           createdAt:
  *                             type: string
  *                             format: date-time
  *                             example: "2024-01-01T12:00:00Z"
+ *                     meta:
+ *                       type: object
+ *                       description: Pagination metadata
+ *                       properties:
+ *                         currentPage:
+ *                           type: integer
+ *                           example: 1
+ *                         totalPages:
+ *                           type: integer
+ *                           example: 5
+ *                         totalItems:
+ *                           type: integer
+ *                           example: 100
+ *                         itemsPerPage:
+ *                           type: integer
+ *                           example: 20
+ *       400:
+ *         description: Invalid request parameters
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: ERROR
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 400
+ *                 message:
+ *                   type: string
+ *                   example: Invalid pagination or filter parameters
  *       401:
  *         description: Unauthorized - User is not authenticated
  *         content:
@@ -87,6 +143,22 @@ const route = express.Router();
  *                 message:
  *                   type: string
  *                   example: Unauthorized
+ *       422:
+ *         description: Unprocessable Entity - Invalid filter or pagination parameters
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: VALIDATION_ERROR
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 422
+ *                 message:
+ *                   type: string
+ *                   example: Invalid filter parameter
  *       500:
  *         description: Internal server error
  *         content:
@@ -111,19 +183,36 @@ route.get('/', async (req: Request, res: Response, next: NextFunction) => {
     return next(new UnauthorizedError(ErrorMessages.unauthorized));
   }
 
-  const status = req.query.status as ChallengeStatus;
-  const page = Number(req.query.page);
-  const limit = Number(req.query.limit);
+  const { status = ChallengeStatus.ACTIVE, page = 1, limit = 20 } = req.query;
+
+  const parsedPagination = PaginationParamsSchema.safeParse({
+    page: Number(page),
+    limit: Number(limit),
+  });
+
+  if (parsedPagination.error) {
+    return next(
+      new UnprocessableEntityError(parsedPagination.error.errors[0].message),
+    );
+  }
+
+  const parsedFilter = ChallengeStatusFilterSchema.safeParse(status);
+
+  if (parsedFilter.error) {
+    return next(
+      new UnprocessableEntityError(parsedFilter.error.errors[0].message),
+    );
+  }
 
   try {
     const { data, pagination } = await UserChallengeCrud.findMany({
       whereClause: {
         userId: user.id,
-        status,
+        status: parsedFilter.data,
       },
       paginationParams: {
-        page,
-        limit,
+        page: parsedPagination.data?.page,
+        limit: parsedPagination.data?.limit,
       },
     });
 

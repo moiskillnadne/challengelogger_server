@@ -5,6 +5,8 @@ import { UserCredential } from './UserCredential';
 import { UserDevice } from './UserDevice';
 import { UserMeta } from './UserMeta';
 
+import { UserNotificationSettings } from '~/database/models/UserNotificationSettings';
+
 // User model
 User.hasMany(UserChallenge, {
   foreignKey: 'userId',
@@ -54,6 +56,18 @@ User.hasOne(UserMeta, {
 });
 
 UserMeta.belongsTo(User, {
+  foreignKey: 'userId',
+  as: 'user',
+});
+
+// UserNotificationSettings model
+
+User.hasOne(UserNotificationSettings, {
+  foreignKey: 'userId',
+  as: 'notificationSettings',
+});
+
+UserNotificationSettings.belongsTo(User, {
   foreignKey: 'userId',
   as: 'user',
 });

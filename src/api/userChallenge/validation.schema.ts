@@ -1,6 +1,10 @@
 import z from 'zod';
 
-import { ChallengeStatus, ChallengeTypeValues } from '~/shared/userChallenge';
+import {
+  ChallengeStatus,
+  ChallengeStatusValues,
+  ChallengeTypeValues,
+} from '~/shared/userChallenge';
 
 export interface FindByParams {
   id: string;
@@ -13,6 +17,7 @@ export const CreateChallengeSchema = z.object({
   duration: z.number(),
   description: z.string().max(500).or(z.null()),
   type: z.enum(ChallengeTypeValues as [string, ...string[]]),
+  status: z.enum(ChallengeStatusValues as [string, ...string[]]),
 });
 
 export type CreateChallengeReqPayload = z.infer<typeof CreateChallengeSchema>;

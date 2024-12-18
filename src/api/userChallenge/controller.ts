@@ -659,6 +659,7 @@ route.post(
 
       const dbresult = await UserChallengeCrud.create({
         ...parsedBody.data,
+        status: 'ACTIVE',
         userId: user.id,
       });
 

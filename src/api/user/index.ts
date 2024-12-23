@@ -55,22 +55,6 @@ const route = express.Router();
  *                         logo:
  *                           type: string
  *                           example: "Base64"
- *       422:
- *         description: Unprocessable Entity - Invalid base64
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 type:
- *                   type: string
- *                   example: UNPROCESSABLE_ENTITY_ERROR
- *                 statusCode:
- *                   type: integer
- *                   example: 422
- *                 message:
- *                   type: string
- *                   example: Invalid base64
  *       401:
  *         description: Unauthorized - User is not authenticated
  *         content:
@@ -162,6 +146,22 @@ route.get('/', (req: Request, res: Response, next: NextFunction) => {
  *                 isSuccess:
  *                   type: boolean
  *                   example: true
+ *       422:
+ *         description: Unprocessable Entity - Invalid base64
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: UNPROCESSABLE_ENTITY_ERROR
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 422
+ *                 message:
+ *                   type: string
+ *                   example: Invalid base64
  *       401:
  *         description: Unauthorized - User is not authenticated
  *         content:

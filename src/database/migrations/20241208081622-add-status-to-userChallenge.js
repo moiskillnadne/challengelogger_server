@@ -13,10 +13,14 @@ module.exports = {
     });
 
     const currentDate = new Date();
-    const currentMonth = currentDate.getMonth();
+    const currentMonth = currentDate.getMonth() + 1;
     const currentYear = currentDate.getFullYear();
 
+    console.log(currentMonth);
+
     const formattedCurrentMonth = ('0' + currentMonth).slice(-2);
+
+    console.log(formattedCurrentMonth);
 
     await queryInterface.bulkUpdate(
       'userChallenge',

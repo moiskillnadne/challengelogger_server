@@ -18,6 +18,10 @@ export const User = Sequelize.define(
         isEmail: true,
       },
     },
+    logo: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
   },
   {},
 );

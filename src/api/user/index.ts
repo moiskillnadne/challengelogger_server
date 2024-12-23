@@ -179,7 +179,7 @@ route.get('/', (req: Request, res: Response, next: NextFunction) => {
  *                 message:
  *                   type: string
  *                   example: "Unauthorized"
- *        500:
+ *       500:
  *         description: Internal server error
  *         content:
  *           application/json:
@@ -272,7 +272,7 @@ route.post('/logo', async (req: Request, res: Response, next: NextFunction) => {
  *                 message:
  *                   type: string
  *                   example: "Unauthorized"
- *        500:
+ *       500:
  *         description: Internal server error
  *         content:
  *           application/json:

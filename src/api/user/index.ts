@@ -1,10 +1,11 @@
 import express, { NextFunction, Request, Response } from 'express';
 
+import { UserCrud } from './user.crud';
+import { UpdateUserLogoSchema } from './validation.schema';
+
 import { ErrorMessages } from '~/core/dictionary/error.messages';
 import { UnauthorizedError, UnprocessableEntityError } from '~/core/errors';
 import { isAuthenticated } from '~/shared/user';
-import { UpdateUserLogoSchema } from './validation.schema';
-import { UserCrud } from './user.crud';
 
 const route = express.Router();
 

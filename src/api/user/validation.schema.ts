@@ -2,9 +2,9 @@ import z from 'zod';
 
 export type updateUserLogoReqPayload = z.infer<typeof UpdateUserLogoSchema>;
 
-export type deleteUserLogoDBPayload = {
+export interface deleteUserLogoDBPayload {
   userId: string;
-};
+}
 
 export type updateUserLogoDBPayload = updateUserLogoReqPayload &
   deleteUserLogoDBPayload;

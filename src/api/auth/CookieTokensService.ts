@@ -38,7 +38,6 @@ export class CookieTokensService {
     res.clearCookie(Cookies.accessToken, {
       httpOnly: true,
       secure: true,
-      maxAge: ONE_MINUTE * 15,
       sameSite: isProduction ? 'strict' : 'none',
     });
 
@@ -46,7 +45,6 @@ export class CookieTokensService {
     res.clearCookie(Cookies.refreshToken, {
       httpOnly: true,
       secure: true,
-      maxAge: ONE_MONTH,
       sameSite: isProduction ? 'strict' : 'none',
       path: '/api/auth/logout',
     });
@@ -55,7 +53,6 @@ export class CookieTokensService {
     res.clearCookie(Cookies.refreshToken, {
       httpOnly: true,
       secure: true,
-      maxAge: ONE_MONTH,
       sameSite: isProduction ? 'strict' : 'none',
       path: '/api/auth/refresh-token',
     });

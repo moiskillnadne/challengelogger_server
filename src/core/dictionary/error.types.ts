@@ -10,6 +10,7 @@ export const SpecificErrorTypes = {
   Unauthorized: {
     CookiesUndefined: 'COOKIES_UNDEFINED',
     AccessTokenUndefined: 'ACCESS_TOKEN_UNDEFINED',
+    RefreshTokenUndefined: 'REFRESH_TOKEN_UNDEFINED',
     TokenUnprocessable: 'TOKEN_UNPROCESSABLE',
     UserNotFound: 'USER_NOT_FOUND',
   },

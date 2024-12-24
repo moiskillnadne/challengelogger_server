@@ -537,11 +537,25 @@ route.post(
     try {
       const cookies = req.cookies;
 
+      if (!Object.keys(cookies).length) {
+        return next(
+          new BadRequestError(`[POST: /refresh-token] Cookies is undefined`),
+        );
+      }
+
       const refreshToken = cookies[Cookies.refreshToken] ?? null;
 
       logger.info(
-        `[/api/auth/refresh-token] Refresh token from cookies: ${JSON.stringify(refreshToken)}`,
+        `[POST: /refresh-token] Refresh token from cookies: ${JSON.stringify(refreshToken)}`,
       );
+
+      if (!refreshToken) {
+        return next(
+          new BadRequestError(
+            `[POST: /refresh-token] Refresh token is missing`,
+          ),
+        );
+      }
 
       const decoded = jwtService.verifyToken({
         token: refreshToken,
@@ -549,7 +563,7 @@ route.post(
       });
 
       logger.info(
-        `[/api/auth/refresh-token] Decoded refresh: ${JSON.stringify(decoded)}`,
+        `[POST: /refresh-token] Decoded refresh: ${JSON.stringify(decoded)}`,
       );
 
       if (typeof decoded === 'string') {
@@ -567,7 +581,7 @@ route.post(
       const emailFromToken: string | null = decoded['email'] ?? null;
 
       logger.info(
-        `[/api/auth/refresh-token] Email from refreshToken: ${emailFromToken}`,
+        `[POST: /refresh-token] Email from refreshToken: ${emailFromToken}`,
       );
 
       if (!emailFromToken) {
@@ -586,7 +600,9 @@ route.post(
         mapToRefreshTokenKey(emailFromToken),
       );
 
-      logger.info(`Refresh token from Redis: ${refreshTokenFromRedis}`);
+      logger.info(
+        `[POST: /refresh-token] Refresh token from Redis: ${refreshTokenFromRedis}`,
+      );
 
       if (!refreshTokenFromRedis) {
         CookieTokensService.clearCookies(res);

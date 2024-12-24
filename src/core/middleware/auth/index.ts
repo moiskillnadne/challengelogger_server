@@ -19,7 +19,7 @@ export const authMiddleware = async (
   try {
     const cookies = req.cookies;
 
-    if (!cookies) {
+    if (!Object.keys(cookies).length) {
       throw new UnauthorizedError(
         `${middlewarePrefix} Cookies undefined. Cookies: ${JSON.stringify(cookies)}`,
         SpecificErrorTypes.Unauthorized.CookiesUndefined,

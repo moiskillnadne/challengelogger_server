@@ -1,6 +1,6 @@
 import { Model } from 'sequelize';
 
-import { CreateUserSchemaType } from './schema';
+import { CreateUserSchemaType, UpdateUserDBPayload } from './schema';
 import { UserCredential } from '../../database/models/UserCredential';
 
 import { User } from '~/database/models/User';
@@ -38,5 +38,26 @@ export class UserCrudService {
         },
       ],
     });
+  }
+
+  static update(updatePayload: UpdateUserDBPayload, userId: string) {
+    return User.update(updatePayload, {
+      where: {
+        id: userId,
+      },
+    });
+  }
+
+  static deleteLogo(userId: string) {
+    return User.update(
+      {
+        logo: null,
+      },
+      {
+        where: {
+          id: userId,
+        },
+      },
+    );
   }
 }

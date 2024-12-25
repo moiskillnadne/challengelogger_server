@@ -7,3 +7,12 @@ export const CreateUserSchema = zod.object({
     .max(255, 'Email length limit is 255 symbols')
     .email('Email should be a valid email address'),
 });
+
+export type UpdateUserDBPayload = Partial<{
+  logo: string;
+  email: string;
+}>;
+
+export const UpdateUserLogoSchema = zod.object({
+  logo: zod.string().base64(),
+});

@@ -1,9 +1,9 @@
 import { Model } from 'sequelize';
 
 import { CreateUserSchemaType, UpdateUserDBPayload } from './schema';
-import { UserCredential } from '../../database/models/UserCredential';
 
 import { User } from '~/database/models/User';
+import { UserCredential } from '~/database/models/UserCredential';
 
 export class UserCrudService {
   static async createUser(

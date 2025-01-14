@@ -5,6 +5,7 @@ import { UserCredential } from './UserCredential';
 import { UserDevice } from './UserDevice';
 import { UserMeta } from './UserMeta';
 
+import { CounterEntity } from '~/database/models/Counter';
 import { UserNotificationSettings } from '~/database/models/UserNotificationSettings';
 
 // User model
@@ -68,6 +69,16 @@ User.hasOne(UserNotificationSettings, {
 });
 
 UserNotificationSettings.belongsTo(User, {
+  foreignKey: 'userId',
+  as: 'user',
+});
+
+User.hasMany(CounterEntity, {
+  foreignKey: 'userId',
+  as: 'counter',
+});
+
+CounterEntity.belongsTo(User, {
   foreignKey: 'userId',
   as: 'user',
 });

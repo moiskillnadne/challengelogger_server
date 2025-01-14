@@ -28,6 +28,8 @@ import { Sequelize } from '~/database';
 // Setup associations
 import '~/database/models/association';
 
+import '~/cron-jobs';
+
 process.on('uncaughtException', (err: Error) => {
   logger.error(`Uncaught Exception: ${err.message}`);
   Sentry.captureException(err);

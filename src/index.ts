@@ -12,6 +12,7 @@ import { serve, setup } from 'swagger-ui-express';
 import { redis } from './redis';
 
 import AuthRouter from '~/api/auth';
+import CounterRoute from '~/api/counter/contoller';
 import PasskeysRouter from '~/api/passkeys/controller';
 import UserRoute from '~/api/user';
 import ChallengeRoute from '~/api/userChallenge/controller';
@@ -92,6 +93,8 @@ app.use('/api/protected/challenge', authMiddleware, ChallengeRoute);
 app.use('/api/protected/userDevice', authMiddleware, UserDeviceRoute);
 
 app.use('/api/protected/userMeta', authMiddleware, UserMetaRoute);
+
+app.use('/api/protected/counter', authMiddleware, CounterRoute);
 
 app.use(
   '/api/protected/userNotificationSettings',

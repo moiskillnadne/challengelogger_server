@@ -83,4 +83,15 @@ export class UserChallengeCrud {
       },
     });
   }
+
+  static completeAllActiveChallenges() {
+    return UserChallenge.update(
+      { status: 'COMPLETED' },
+      {
+        where: {
+          status: 'ACTIVE',
+        },
+      },
+    );
+  }
 }

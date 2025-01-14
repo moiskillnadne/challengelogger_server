@@ -1,7 +1,7 @@
 import { Response } from 'express';
 
-import { Cookies, ONE_MINUTE, ONE_MONTH } from '../../core/constants';
-import { isProduction } from '../../core/utils';
+import { Cookies, ONE_MINUTE, ONE_MONTH } from '~/core/constants';
+import { isProduction } from '~/core/utils';
 
 export class CookieTokensService {
   static setAccessTokenCookie(res: Response, token: string): void {

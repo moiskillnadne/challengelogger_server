@@ -41,7 +41,7 @@ module.exports = {
       userId: {
         type: Sequelize.UUIDV4,
         allowNull: false,
-        unique: true,
+        unique: false,
         references: {
           model: 'user',
           key: 'id',
@@ -53,11 +53,6 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    /**
-     * Add reverting commands here.
-     *
-     * Example:
-     * await queryInterface.dropTable('users');
-     */
+    await queryInterface.dropTable('counter');
   },
 };

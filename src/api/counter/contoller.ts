@@ -122,6 +122,7 @@ route.post(
         },
       });
     } catch (error) {
+      console.error(error);
       return next(error);
     }
   },

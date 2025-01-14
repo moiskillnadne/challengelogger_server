@@ -34,7 +34,7 @@ export const CounterEntity = Sequelize.define(
     userId: {
       type: DataTypes.UUIDV4,
       allowNull: false,
-      unique: true,
+      unique: false,
       references: {
         model: User,
         key: 'id',

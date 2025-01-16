@@ -1,11 +1,10 @@
 import { CreateChallengeDBPayload, FindByParams } from './validation.schema';
 
 import { getPaginationMeta, PaginationParams } from '~/core/utils';
+import Sequelize from '~/database/connection';
 import { UserChallenge } from '~/database/models/UserChallenge';
 import { UserChallengeProgress } from '~/database/models/UserChallengeProgress';
 import { ChallengeStatus } from '~/shared/userChallenge';
-
-import Sequelize from '~/database/connection';
 
 interface WhereClause {
   userId: string;
@@ -95,8 +94,6 @@ export class UserChallengeCrud {
 
       try {
         await Sequelize.query('PRAGMA journal_mode = MEMORY;', { transaction });
-        const UPDATE_QUERY_LIMIT = 5000;
-        const TABLE_NAME = 'userChallenge';
 
         await Sequelize.query(
           `UPDATE ${TABLE_NAME}

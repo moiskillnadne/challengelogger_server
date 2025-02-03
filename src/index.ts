@@ -106,6 +106,10 @@ app.get('/api/healthcheck', (req: Request, res: Response) => {
   res.status(200).send('OK');
 });
 
+app.get('/debug-sentry', () => {
+  throw new Error('debug-sentry endpoint was called!');
+});
+
 app.all('*', (req: Request, res: Response) => {
   return res.status(404).json({
     error: true,

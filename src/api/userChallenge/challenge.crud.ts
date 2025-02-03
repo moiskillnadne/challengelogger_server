@@ -1,6 +1,7 @@
 import { CreateChallengeDBPayload, FindByParams } from './validation.schema';
 
 import { getPaginationMeta, PaginationParams } from '~/core/utils';
+import Sequelize from '~/database/connection';
 import { UserChallenge } from '~/database/models/UserChallenge';
 import { UserChallengeProgress } from '~/database/models/UserChallengeProgress';
 import { ChallengeStatus } from '~/shared/userChallenge';
@@ -84,14 +85,42 @@ export class UserChallengeCrud {
     });
   }
 
-  static completeAllActiveChallenges() {
-    return UserChallenge.update(
-      { status: 'COMPLETED' },
-      {
-        where: {
-          status: 'ACTIVE',
-        },
-      },
-    );
+  static async completeAllActiveChallenges() {
+    const UPDATE_QUERY_LIMIT = 5000;
+    const TABLE_NAME = 'userChallenge';
+
+    try {
+      const transaction = await Sequelize.transaction();
+
+      try {
+        await Sequelize.query('PRAGMA journal_mode = MEMORY;', { transaction });
+
+        await Sequelize.query(
+          `UPDATE ${TABLE_NAME}
+                 SET status = "COMPLETED" 
+                 WHERE id IN (
+                     SELECT id FROM ${TABLE_NAME} 
+                     WHERE status = "ACTIVE" 
+                     LIMIT :limit
+                 );`,
+          {
+            replacements: {
+              limit: UPDATE_QUERY_LIMIT,
+            },
+            transaction,
+          },
+        );
+
+        await transaction.commit();
+      } catch (error) {
+        await transaction.rollback();
+        console.error('[Complete All Active Challenges] Update failed:', error);
+      }
+    } catch (error) {
+      console.error(
+        '[Complete All Active Challenges] Transaction execution failed:',
+        error,
+      );
+    }
   }
 }

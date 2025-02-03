@@ -5,8 +5,8 @@ import { completeAllActiveChallengesInTheEndOfMonth } from '~/cron-jobs/jobs/cha
 cron.schedule(
   '*/5 22-23 28-31 * *',
   async () => {
-    await completeAllActiveChallengesInTheEndOfMonth();
     // There is a limit of 120000 status updates with current implementation
+    await completeAllActiveChallengesInTheEndOfMonth();
   },
   {
     runOnInit: true,

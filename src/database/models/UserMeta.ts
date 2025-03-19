@@ -29,6 +29,13 @@ export const UserMeta = Sequelize.define(
       onUpdate: 'CASCADE',
       onDelete: 'CASCADE',
     },
+
+    fcmToken: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      unique: false,
+      defaultValue: null,
+    },
   },
   {},
 );

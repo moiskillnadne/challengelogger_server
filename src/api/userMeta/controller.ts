@@ -1,7 +1,7 @@
 import express, { NextFunction, Request, Response } from 'express';
 
 import { UserMeta, UserMetaCrud } from './meta.crud';
-import { CreateMetaSchema } from './validation.schema';
+import { CreateMetaSchema, CreateFcmTokenSchema } from './validation.schema';
 
 import { ErrorMessages } from '~/core/dictionary/error.messages';
 import {
@@ -72,6 +72,41 @@ route.get(
     const userMeta = modelToPlain<UserMeta>(userMetaEntity);
 
     res.status(200).json(userMeta);
+  },
+);
+
+route.post(
+  '/save/fcm-token',
+  authMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user;
+
+    if (!isAuthenticated(user)) {
+      return next(new UnauthorizedError(ErrorMessages.unauthorized));
+    }
+    try {
+      logger.info(`[${req.traceId}] Body: ${JSON.stringify(req.body)}`);
+
+      const validationResult = CreateFcmTokenSchema.safeParse(req.body);
+
+      if (!validationResult.success) {
+        throw new UnprocessableEntityError(
+          validationResult.error.errors[0].message,
+        );
+      }
+
+      const userMeta = req.body;
+
+      await UserMetaCrud.saveFcmToken({
+        userId: user.id,
+        fcmToken: userMeta.fcmToken,
+      });
+
+      return res.status(200).json({ success: true });
+    } catch (error: unknown) {
+      logger.error(`Error saving user meta: ${error}`);
+      return res.status(404).json({ isSuccess: false, error });
+    }
   },
 );
 
